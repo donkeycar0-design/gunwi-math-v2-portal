@@ -1129,7 +1129,7 @@ const AbsenceView = ({ absences: initialAbsences, user, today, showToast, reload
             }
             {showModal && (
                 <div className="modal-overlay" onClick={e=>e.target===e.currentTarget&&(setShowModal(false),setEditTarget(null))}>
-                    <div className="modal-box modal-down" style={{marginTop:'25vh'}}>
+                    <div className="modal-box">
                         <div className="modal-title">{editTarget?'결석 사유 수정':'결석 사유 입력'}</div>
                         <div><div className="form-label">날짜</div>
                             <input className="form-input" type="date" value={form.date} onChange={e=>setForm(f=>({...f,date:e.target.value}))}/>
@@ -1241,7 +1241,7 @@ const CounselView = ({ counsels: initialCounsels, user, today, showToast, reload
             }
             {showModal && (
                 <div className="modal-overlay" onClick={e=>e.target===e.currentTarget&&(setShowModal(false),setEditTarget(null))}>
-                    <div className="modal-box modal-down" style={{marginTop:'25vh'}}>
+                    <div className="modal-box">
                         <div className="modal-title">{editTarget?'상담 기록 수정':'학부모 상담 기록'}</div>
                         <div><div className="form-label">날짜</div><input className="form-input" type="date" value={form.date} onChange={e=>setForm(f=>({...f,date:e.target.value}))}/></div>
                         <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
