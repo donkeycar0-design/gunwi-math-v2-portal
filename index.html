@@ -90,7 +90,12 @@
 
     /* ── 모달 ── */
     .modal-overlay { position: fixed; inset: 0; z-index: 100; background: rgba(15,23,42,.4); backdrop-filter: blur(6px); display: flex; align-items: center; justify-content: center; padding: 16px; }
-    .modal-box { background: #fff; width: 100%; max-width: 440px; border-radius: 32px; padding: 32px; box-shadow: 0 24px 64px rgba(0,0,0,.15); animation: scaleIn .25s cubic-bezier(.34,1.56,.64,1) both; display: flex; flex-direction: column; gap: 12px; }
+    @media (max-width: 768px) {
+        .modal-overlay { align-items: flex-end; padding: 0; }
+        .modal-box { border-radius: 28px 28px 0 0 !important; max-height: 90dvh; padding: 24px 20px !important; animation: slideUp .3s ease both !important; }
+    }
+    @keyframes slideUp { from { transform: translateY(60px); opacity:0; } to { transform: translateY(0); opacity:1; } }
+    .modal-box { background: #fff; width: 100%; max-width: 440px; border-radius: 32px; padding: 28px; box-shadow: 0 24px 64px rgba(0,0,0,.15); animation: scaleIn .25s cubic-bezier(.34,1.56,.64,1) both; display: flex; flex-direction: column; gap: 12px; max-height: 85dvh; overflow-y: auto; }
     .modal-title { font-size: 20px; font-weight: 900; color: #0f172a; margin-bottom: 4px; }
     .modal-btns { display: flex; gap: 8px; margin-top: 8px; }
     .btn-cancel { flex: 1; padding: 14px; font-size: 14px; font-weight: 900; color: #94a3b8; background: #f8fafc; border-radius: 16px; }
@@ -1156,7 +1161,7 @@ const AbsenceView = ({ absences: initialAbsences, user, today, showToast, reload
                             <input className="form-input" value={form.studentName} onChange={e=>setForm(f=>({...f,studentName:e.target.value}))} placeholder="학생 이름 입력"/>
                         </div>
                         <div><div className="form-label">결석 사유</div>
-                            <textarea className="form-textarea" value={form.reason} onChange={e=>setForm(f=>({...f,reason:e.target.value}))} placeholder="결석 사유를 입력해 주세요"/>
+                            <textarea className="form-textarea" value={form.reason} onChange={e=>setForm(f=>({...f,reason:e.target.value}))} placeholder="결석 사유를 입력해 주세요" style={{minHeight:100}}/>
                         </div>
                         <div className="modal-btns">
                             <button className="btn-cancel" onClick={()=>{setShowModal(false);setEditTarget(null);}}>취소</button>
@@ -1256,7 +1261,7 @@ const CounselView = ({ counsels: initialCounsels, user, today, showToast, reload
                         <div><div className="form-label">날짜</div><input className="form-input" type="date" value={form.date} onChange={e=>setForm(f=>({...f,date:e.target.value}))}/></div>
                         <div><div className="form-label">학생 이름</div><input className="form-input" value={form.studentName} onChange={e=>setForm(f=>({...f,studentName:e.target.value}))} placeholder="학생 이름"/></div>
                         <div><div className="form-label">학부모 이름 (선택)</div><input className="form-input" value={form.parentName} onChange={e=>setForm(f=>({...f,parentName:e.target.value}))} placeholder="학부모 성함"/></div>
-                        <div><div className="form-label">상담 내용</div><textarea className="form-textarea" value={form.content} onChange={e=>setForm(f=>({...f,content:e.target.value}))} placeholder="상담 내용을 입력해 주세요" style={{minHeight:140}}/></div>
+                        <div><div className="form-label">상담 내용</div><textarea className="form-textarea" value={form.content} onChange={e=>setForm(f=>({...f,content:e.target.value}))} placeholder="상담 내용을 입력해 주세요" style={{minHeight:120}}/></div>
                         <div className="modal-btns">
                             <button className="btn-cancel" onClick={()=>{setShowModal(false);setEditTarget(null);}}>취소</button>
                             <button className="btn-confirm" style={{background:'#8b5cf6'}} onClick={handleSave} disabled={saving}>
