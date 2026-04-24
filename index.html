@@ -160,32 +160,30 @@
 <script type="text/babel">
 const { useState, useEffect, useCallback, useMemo } = React;
 
-const SUPER_ADMIN_PW = 'l2387008'; // 슈퍼 관리자 비번 (숨김)
-const TEACHER_INIT_PW = '1234';    // 강사 초기 비번
+const SUPER_ADMIN_PW = 'l2387008';
+const TEACHER_INIT_PW = '1234';
 
-// 일반 관리자 4명 (이름 + 초기비번 1234, 첫 로그인 후 변경)
 const ADMIN_ACCOUNTS = [
     {name:'김남탁',  password:'1234', isFirst:true},
     {name:'김유식',  password:'1234', isFirst:true},
     {name:'사공은경',password:'1234', isFirst:true},
     {name:'김윤희',  password:'1234', isFirst:true},
 ];
-const getKSTDate = (d = new Date()) => new Date(d.getTime() + 9*3600*1000).toISOString().split('T')[0];
-const TODAY = getKSTDate();
 
-// ✅ 날짜 정규화 - ISO 문자열을 KST 기준 yyyy-MM-dd 로 변환
+const getKSTDate = (d = new Date()) => new Date(d.getTime() + 9*3600*1000).toISOString().split('T')[0];
+
+// ✅ TODAY는 컴포넌트 안에서 getKSTDate()로 매번 호출 (전역 상수 제거)
+
 const normalizeDate = val => {
     if (!val) return '';
     const s = String(val).replace(/^'+/, '').trim();
     if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
-    // ISO 문자열이면 KST 변환
     if (s.includes('T') || s.includes('Z')) {
         return getKSTDate(new Date(s));
     }
     return s.substring(0, 10);
 };
 
-// ✅ 날짜/시각 표시 - KST 기준
 const formatDateTime = val => {
     if (!val) return '—';
     try { return new Date(val).toLocaleString('ko-KR', {timeZone:'Asia/Seoul'}); }
@@ -197,7 +195,10 @@ const formatDate = val => {
     return normalizeDate(val);
 };
 
-// ── 전체 분반 목록 ──
+// ✅ CreatedAt 기준 내림차순 정렬 헬퍼
+const sortByCreatedAt = (arr) =>
+    [...arr].sort((a, b) => new Date(b.CreatedAt) - new Date(a.CreatedAt));
+
 const ALL_CLASSES = (() => {
     const out = [];
     [1,2,3,4,5,6].forEach(g => {
@@ -216,15 +217,13 @@ const GRADE_GROUPS = [1,2,3,4,5,6].map(g => ({
     classes: ALL_CLASSES.filter(c => c.id.startsWith(`e${g}-`)),
 }));
 
-// 강사의 담당반 ID 배열 → 라벨 배열
 const getClassLabels = (classStr) => {
     if (!classStr) return [];
     return classStr.split(',').map(id => ALL_CLASSES.find(c=>c.id===id.trim())?.label).filter(Boolean);
 };
 
-// ━━━ ⚙️ Supabase 연결 설정 ━━━
 const SB_URL = 'https://uypqettuaytbcyfhngnq.supabase.co';
-const SB_KEY = 'sb_publishable_Q7otgfp69OfgIKzQAlRa_g_HDwcLDZc';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV5cHFldHR1YXl0YmN5ZmhuZ25xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY5NDYzMTIsImV4cCI6MjA5MjUyMjMxMn0.wwiJAI3jRyPEg_OdO-fy-0c-X4cdPRcZOpdP82tJnEI';
 
 const sbFetch = (path, opts={}) => fetch(`${SB_URL}/rest/v1/${path}`, {
     ...opts,
@@ -237,7 +236,6 @@ const sbFetch = (path, opts={}) => fetch(`${SB_URL}/rest/v1/${path}`, {
     }
 }).then(r => r.json());
 
-// ── Supabase API (기존 GAS api와 동일한 인터페이스) ──
 const api = {
     get: async (action) => {
         if (action === 'getTeachers') {
@@ -249,14 +247,17 @@ const api = {
             return data.map(n => ({ ID:n.id, Title:n.title, Content:n.content, CreatedAt:n.created_at }));
         }
         if (action === 'getJournals') {
+            // ✅ created_at 내림차순으로 가져옴
             const data = await sbFetch('journals?select=*&order=created_at.desc');
             return data.map(j => ({ ID:j.id, Date:j.date, TeacherName:j.teacher_name, Content:j.content, CreatedAt:j.created_at }));
         }
         if (action === 'getAbsences') {
+            // ✅ created_at 내림차순으로 가져옴
             const data = await sbFetch('absences?select=*&order=created_at.desc');
             return data.map(a => ({ ID:a.id, Date:a.date, StudentName:a.student_name, ClassName:a.class_name, Reason:a.reason, TeacherName:a.teacher_name, CreatedAt:a.created_at }));
         }
         if (action === 'getCounsels') {
+            // ✅ created_at 내림차순으로 가져옴
             const data = await sbFetch('counsels?select=*&order=created_at.desc');
             return data.map(c => ({ ID:c.id, Date:c.date, StudentName:c.student_name, ParentName:c.parent_name, Content:c.content, TeacherName:c.teacher_name, CreatedAt:c.created_at }));
         }
@@ -267,7 +268,6 @@ const api = {
         const { action, ...payload } = body;
         const uuid = () => crypto.randomUUID();
 
-        // ── 강사 ──
         if (action === 'getTeachers') return api.get('getTeachers');
         if (action === 'registerTeacher') {
             await sbFetch('teachers', { method:'POST', body: JSON.stringify({ id:uuid(), name:payload.name, password:'1234', classes:'', is_first:true }) });
@@ -290,7 +290,6 @@ const api = {
             return { success:true };
         }
 
-        // ── 공지 ──
         if (action === 'addNotice') {
             await sbFetch('notices', { method:'POST', body: JSON.stringify({ id:uuid(), title:payload.title, content:payload.content }) });
             return { success:true };
@@ -304,7 +303,6 @@ const api = {
             return { success:true };
         }
 
-        // ── 근무일지 ──
         if (action === 'addJournal') {
             await sbFetch('journals', { method:'POST', body: JSON.stringify({ id:uuid(), date:payload.date, teacher_name:payload.teacherName, content:payload.content }) });
             return { success:true };
@@ -318,7 +316,6 @@ const api = {
             return { success:true };
         }
 
-        // ── 결석 ──
         if (action === 'addAbsence') {
             await sbFetch('absences', { method:'POST', body: JSON.stringify({ id:uuid(), date:payload.date, student_name:payload.studentName, class_name:payload.className||'', reason:payload.reason, teacher_name:payload.teacherName }) });
             return { success:true };
@@ -332,7 +329,6 @@ const api = {
             return { success:true };
         }
 
-        // ── 상담 ──
         if (action === 'addCounsel') {
             await sbFetch('counsels', { method:'POST', body: JSON.stringify({ id:uuid(), date:payload.date, student_name:payload.studentName, parent_name:payload.parentName||'', content:payload.content, teacher_name:payload.teacherName }) });
             return { success:true };
@@ -346,7 +342,6 @@ const api = {
             return { success:true };
         }
 
-        // ── 관리자 ──
         if (action === 'updateAdminPw') return { success:true };
         if (action === 'resetAdminPw')  return { success:true };
 
@@ -392,13 +387,11 @@ const LoginScreen = ({ onLogin }) => {
         try {
             const trimName = name.trim();
 
-            // 1. 슈퍼 관리자 — 이름 없이 비번만 (l2387008)
             if (!trimName && pw === SUPER_ADMIN_PW) {
                 onLogin({ role:'admin', name:'관리자', isSuper:true });
                 return;
             }
 
-            // 2. 일반 관리자 — 이름 + 고정 비번 321!
             const ADMIN_LIST = ['김남탁','김유식','사공은경','김윤희'];
             if (ADMIN_LIST.includes(trimName)) {
                 if (pw !== '321!') { setErr('비밀번호가 틀렸습니다'); return; }
@@ -406,13 +399,11 @@ const LoginScreen = ({ onLogin }) => {
                 return;
             }
 
-            // 3. 강사 — 이름 + 비번 (Sheets 연동)
             if (!trimName) { setErr('이름을 입력해 주세요'); return; }
             const teachers = await api.get('getTeachers');
             const foundTeacher = Array.isArray(teachers) ? teachers.find(t=>t.Name===trimName) : null;
 
             if (!foundTeacher) {
-                // 첫 방문 강사
                 if (pw !== TEACHER_INIT_PW) { setErr('처음 로그인은 초기 비번을 사용해 주세요'); return; }
                 const res = await api.post({ action:'registerTeacher', name:trimName });
                 if (res.error) { setErr(res.error); return; }
@@ -454,7 +445,7 @@ const LoginScreen = ({ onLogin }) => {
     );
 };
 
-// ━━━ 관리자 첫 로그인 셋업 (비번 변경만) ━━━
+// ━━━ 관리자 첫 로그인 셋업 ━━━
 const AdminSetupScreen = ({ user, onDone }) => {
     const [newPw,     setNewPw]     = useState('');
     const [confirmPw, setConfirmPw] = useState('');
@@ -499,7 +490,7 @@ const AdminSetupScreen = ({ user, onDone }) => {
     );
 };
 
-// ━━━ 첫 로그인 셋업 화면 (강사 — 담당반 선택만) ━━━
+// ━━━ 첫 로그인 셋업 화면 (강사) ━━━
 const SetupScreen = ({ user, onDone }) => {
     const [classes, setClasses] = useState([]);
     const [err,     setErr]     = useState('');
@@ -512,7 +503,6 @@ const SetupScreen = ({ user, onDone }) => {
         setSaving(true);
         try {
             await api.post({ action:'updateTeacherClasses', name:user.name, classes:classes.join(',') });
-            // IsFirst 도 false 로 업데이트
             await api.post({ action:'updateTeacherPw', name:user.name, newPw: user.pw || '1234' });
             onDone({ ...user, isFirst:false, classes:classes.join(',') });
         } catch(e) { setErr('저장 실패'); }
@@ -584,6 +574,9 @@ const TeacherApp = ({ user, onLogout }) => {
     const [savingClass, setSavingClass] = useState(false);
     const showToast = (m,t='success') => setToast({message:m,type:t});
 
+    // ✅ today를 매번 현재 KST 날짜로 계산
+    const today = getKSTDate();
+
     const toggleClass = id =>
         setMyClasses(prev => prev.includes(id) ? prev.filter(c=>c!==id) : [...prev, id]);
 
@@ -615,7 +608,6 @@ const TeacherApp = ({ user, onLogout }) => {
     }, []);
     useEffect(() => { loadAll(); }, []);
 
-    const today = getKSTDate();
     const userWithClasses = { ...user, classes: myClasses.join(',') };
 
     const navItems = [
@@ -652,7 +644,6 @@ const TeacherApp = ({ user, onLogout }) => {
                             <div style={{fontSize:11,fontWeight:700,color:'#94a3b8'}}>담당 {myClasses.length}개 반</div>
                         </div>
                     </div>
-                    {/* ✅ 담당반 변경 버튼 */}
                     <button onClick={()=>setShowClassModal(true)}
                         style={{display:'flex',alignItems:'center',gap:6,padding:'10px 14px',borderRadius:14,fontSize:12,fontWeight:700,color:'#f97316',width:'100%',background:'#fff7ed'}}>
                         <Icon name="pencil" size={14}/> 담당반 변경
@@ -683,7 +674,6 @@ const TeacherApp = ({ user, onLogout }) => {
             </main>
             {toast && <Toast {...toast} onDone={()=>setToast(null)}/>}
 
-            {/* ✅ 담당반 변경 모달 */}
             {showClassModal && (
                 <div className="modal-overlay" onClick={e=>e.target===e.currentTarget&&setShowClassModal(false)}>
                     <div className="modal-box" style={{maxWidth:480}}>
@@ -748,6 +738,9 @@ const AdminApp = ({ user, onLogout }) => {
 
     const [apiError, setApiError] = useState(null);
 
+    // ✅ today를 매번 현재 KST 날짜로 계산
+    const today = getKSTDate();
+
     const loadAll = useCallback(async () => {
         setLoading(true); setApiError(null);
         try {
@@ -773,8 +766,6 @@ const AdminApp = ({ user, onLogout }) => {
         finally { setLoading(false); }
     }, []);
     useEffect(() => { loadAll(); }, []);
-
-    const today = getKSTDate();
 
     const navItems = [
         {id:'dashboard', label:'전체 현황',    icon:'sparkles', active:'active-orange'},
@@ -857,10 +848,10 @@ const NoticeView = ({ notices: initialNotices, isAdmin, showToast, reload }) => 
     const [saving,     setSaving]    = useState(false);
     const [editTarget, setEditTarget]= useState(null);
 
-    // 부모에서 notices 바뀌면 동기화
     useEffect(() => { setNotices(initialNotices); }, [initialNotices]);
 
-    const sorted = [...notices].sort((a,b) => new Date(b.CreatedAt)-new Date(a.CreatedAt));
+    // ✅ CreatedAt 기준 정렬
+    const sorted = sortByCreatedAt(notices);
 
     const handleSave = async () => {
         if (!form.title.trim()||!form.content.trim()) return;
@@ -869,22 +860,18 @@ const NoticeView = ({ notices: initialNotices, isAdmin, showToast, reload }) => 
         const newNotice = { ID:tempId, Title:form.title, Content:form.content, CreatedAt:new Date().toISOString() };
 
         if (editTarget) {
-            // ✅ 화면 즉시 반영
             setNotices(prev => prev.map(n => n.ID===editTarget ? newNotice : n));
             setForm({title:'',content:''}); setShowModal(false); setEditTarget(null);
             showToast('공지사항이 수정되었습니다');
-            // 백그라운드 저장
             try {
                 await api.post({ action:'deleteNotice', id:editTarget });
                 await api.post({ action:'addNotice', ...form });
-                reload(); // 실제 ID로 교체
+                reload();
             } catch(e){ showToast('저장 실패','error'); reload(); }
         } else {
-            // ✅ 화면 즉시 반영
             setNotices(prev => [newNotice, ...prev]);
             setForm({title:'',content:''}); setShowModal(false);
             showToast('공지사항이 등록되었습니다');
-            // 백그라운드 저장
             try {
                 await api.post({ action:'addNotice', ...form });
                 reload();
@@ -901,10 +888,8 @@ const NoticeView = ({ notices: initialNotices, isAdmin, showToast, reload }) => 
 
     const handleDelete = async (id) => {
         if (!confirm('삭제하시겠습니까?')) return;
-        // ✅ 화면 즉시 반영
         setNotices(prev => prev.filter(n => n.ID !== id));
         showToast('삭제되었습니다');
-        // 백그라운드 삭제
         try { await api.post({action:'deleteNotice',id}); reload(); }
         catch(e){ showToast('삭제 실패','error'); reload(); }
     };
@@ -922,12 +907,10 @@ const NoticeView = ({ notices: initialNotices, isAdmin, showToast, reload }) => 
                 sorted.map(n => (
                     <div key={n.ID} className="notice-item" style={{position:'relative',paddingRight: isAdmin?60:20}}>
                         <div className="notice-title">{n.Title}</div>
-                        {/* ✅ 줄바꿈 적용 */}
                         <div className="notice-body" style={{whiteSpace:'pre-wrap'}}>{n.Content}</div>
                         <div className="notice-date">{n.CreatedAt ? formatDateTime(n.CreatedAt) : ''}</div>
                         {isAdmin && (
                             <div style={{position:'absolute',top:12,right:12,display:'flex',gap:4}}>
-                                {/* ✅ 수정 버튼 추가 */}
                                 <button onClick={()=>handleEdit(n)} style={{color:'#94a3b8',padding:4}} title="수정">
                                     <Icon name="pencil" size={14}/>
                                 </button>
@@ -970,19 +953,19 @@ const JournalView = ({ journals: initialJournals, user, today, showToast, reload
     const [content,    setContent]   = useState('');
     const [selDate,    setSelDate]   = useState(today);
     const [saving,     setSaving]    = useState(false);
-    const [editTarget, setEditTarget]= useState(null); // 수정할 ID
+    const [editTarget, setEditTarget]= useState(null);
 
     useEffect(() => { setJournals(initialJournals); }, [initialJournals]);
 
+    // ✅ CreatedAt 기준 정렬 (내 일지만)
     const myJournals = useMemo(() =>
-        journals.filter(j=>j.TeacherName===user.name)
-            .sort((a,b)=>new Date(b.Date)-new Date(a.Date)), [journals, user]);
+        sortByCreatedAt(journals.filter(j=>j.TeacherName===user.name)),
+    [journals, user]);
 
     const handleSave = async () => {
         if (!content.trim()) return;
         setSaving(true);
         if (editTarget) {
-            // ✅ Supabase PATCH — 화면 즉시 반영
             setJournals(prev => prev.map(j => j.ID===editTarget ? {...j, Content:content.trim(), Date:selDate} : j));
             showToast('일지가 수정되었습니다');
             setContent(''); setSelDate(today); setShowModal(false); setEditTarget(null);
@@ -1061,7 +1044,6 @@ const JournalView = ({ journals: initialJournals, user, today, showToast, reload
     );
 };
 
-
 // ━━━ 결석 사유 (강사) ━━━
 const AbsenceView = ({ absences: initialAbsences, user, today, showToast, reload }) => {
     const [absences,   setAbsences]  = useState(initialAbsences);
@@ -1077,15 +1059,15 @@ const AbsenceView = ({ absences: initialAbsences, user, today, showToast, reload
         return user.classes.split(',').map(id=>ALL_CLASSES.find(c=>c.id===id.trim())).filter(Boolean);
     }, [user]);
 
+    // ✅ CreatedAt 기준 정렬 (내 결석만)
     const myAbsences = useMemo(() =>
-        absences.filter(a=>a.TeacherName===user.name)
-            .sort((a,b)=>new Date(b.Date)-new Date(a.Date)), [absences, user]);
+        sortByCreatedAt(absences.filter(a=>a.TeacherName===user.name)),
+    [absences, user]);
 
     const handleSave = async () => {
         if (!form.studentName.trim()||!form.reason.trim()) return;
         setSaving(true);
         if (editTarget) {
-            // ✅ Supabase PATCH
             setAbsences(prev => prev.map(a => a.ID===editTarget ? {...a, ...form, StudentName:form.studentName, ClassName:form.className, Reason:form.reason, Date:form.date} : a));
             showToast('결석 사유가 수정되었습니다');
             setForm({date:today,studentName:'',className:'',reason:''}); setShowModal(false); setEditTarget(null);
@@ -1152,7 +1134,6 @@ const AbsenceView = ({ absences: initialAbsences, user, today, showToast, reload
                         <div><div className="form-label">날짜</div>
                             <input className="form-input" type="date" value={form.date} onChange={e=>setForm(f=>({...f,date:e.target.value}))}/>
                         </div>
-                        {/* 학생이름 + 반 선택 나란히 */}
                         <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
                             <div><div className="form-label">학생 이름</div>
                                 <input className="form-input" value={form.studentName} onChange={e=>setForm(f=>({...f,studentName:e.target.value}))} placeholder="학생 이름"/>
@@ -1188,15 +1169,15 @@ const CounselView = ({ counsels: initialCounsels, user, today, showToast, reload
 
     useEffect(() => { setCounsels(initialCounsels); }, [initialCounsels]);
 
+    // ✅ CreatedAt 기준 정렬 (내 상담만)
     const myCounsels = useMemo(() =>
-        counsels.filter(c=>c.TeacherName===user.name)
-            .sort((a,b)=>new Date(b.Date)-new Date(a.Date)), [counsels, user]);
+        sortByCreatedAt(counsels.filter(c=>c.TeacherName===user.name)),
+    [counsels, user]);
 
     const handleSave = async () => {
         if (!form.studentName.trim()||!form.content.trim()) return;
         setSaving(true);
         if (editTarget) {
-            // ✅ Supabase PATCH
             setCounsels(prev => prev.map(c => c.ID===editTarget ? {...c, Date:form.date, StudentName:form.studentName, ParentName:form.parentName||'', Content:form.content} : c));
             showToast('상담 기록이 수정되었습니다');
             setForm({date:today,studentName:'',parentName:'',content:''}); setShowModal(false); setEditTarget(null);
@@ -1380,7 +1361,6 @@ const TeacherMgr = ({ teachers, admins, showToast, reload }) => {
         catch(e){ showToast('삭제 실패','error'); }
     };
 
-    // GAS에서 오는 필드명 정규화 (대소문자 대응)
     const safeTeachers = (teachers||[]).map(t => ({
         ID:       t.ID       || t.id       || '',
         Name:     t.Name     || t.name     || '',
@@ -1395,7 +1375,6 @@ const TeacherMgr = ({ teachers, admins, showToast, reload }) => {
 
     return (
         <div className="fade-in" style={{display:'flex',flexDirection:'column',gap:12,paddingBottom:40}}>
-            {/* 탭 */}
             <div style={{display:'flex',gap:8}}>
                 <button onClick={()=>setTab('teacher')} style={{flex:1,padding:'10px',borderRadius:14,fontSize:13,fontWeight:900,background:tab==='teacher'?'#0f172a':'#f8fafc',color:tab==='teacher'?'#fff':'#94a3b8',transition:'all .15s'}}>
                     강사 계정
@@ -1405,7 +1384,6 @@ const TeacherMgr = ({ teachers, admins, showToast, reload }) => {
                 </button>
             </div>
 
-            {/* 안내 - 탭별로 다르게 표시 */}
             {tab === 'teacher' && (
                 <div style={{padding:'14px 18px',background:'#f0fdf4',border:'1px solid #bbf7d0',borderRadius:14,fontSize:12,fontWeight:700,color:'#166534',lineHeight:1.9}}>
                     <div style={{fontWeight:900,marginBottom:4}}>강사 계정 안내</div>
@@ -1421,7 +1399,6 @@ const TeacherMgr = ({ teachers, admins, showToast, reload }) => {
                 </div>
             )}
 
-            {/* 강사 목록 */}
             {tab === 'teacher' && (
                 <>
                     {safeTeachers.length === 0
@@ -1475,7 +1452,6 @@ const TeacherMgr = ({ teachers, admins, showToast, reload }) => {
                 </>
             )}
 
-            {/* 관리자 목록 */}
             {tab === 'admin' && (
                 <>
                     {safeAdmins.map((a,i) => (
@@ -1525,7 +1501,6 @@ const SearchBar = ({ value, onChange, placeholder='검색어를 입력하세요.
     </div>
 );
 
-// 검색어 하이라이트
 const Highlight = ({ text, keyword }) => {
     if (!keyword||!text) return <>{text}</>;
     const parts = String(text).split(new RegExp(`(${keyword})`, 'gi'));
@@ -1535,10 +1510,11 @@ const Highlight = ({ text, keyword }) => {
     )}</>;
 };
 
-// ━━━ 관리자용 전체 뷰 (검색 포함) ━━━
+// ━━━ 관리자용 전체 뷰 (CreatedAt 기준 정렬 + 검색) ━━━
 const JournalAllView = ({ journals }) => {
     const [q, setQ] = useState('');
-    const sorted = [...journals].sort((a,b)=>new Date(b.Date)-new Date(a.Date));
+    // ✅ CreatedAt 기준 정렬
+    const sorted = sortByCreatedAt(journals);
     const filtered = sorted.filter(j => !q || [j.TeacherName,j.Content,j.Date].some(v=>String(v).includes(q)));
     return (
         <div className="fade-in" style={{display:'flex',flexDirection:'column',gap:12,paddingBottom:40}}>
@@ -1560,7 +1536,8 @@ const JournalAllView = ({ journals }) => {
 
 const AbsenceAllView = ({ absences }) => {
     const [q, setQ] = useState('');
-    const sorted = [...absences].sort((a,b)=>new Date(b.Date)-new Date(a.Date));
+    // ✅ CreatedAt 기준 정렬
+    const sorted = sortByCreatedAt(absences);
     const filtered = sorted.filter(a => !q || [a.StudentName,a.ClassName,a.Reason,a.TeacherName,a.Date].some(v=>String(v).includes(q)));
     return (
         <div className="fade-in" style={{display:'flex',flexDirection:'column',gap:12,paddingBottom:40}}>
@@ -1584,7 +1561,8 @@ const AbsenceAllView = ({ absences }) => {
 
 const CounselAllView = ({ counsels }) => {
     const [q, setQ] = useState('');
-    const sorted = [...counsels].sort((a,b)=>new Date(b.Date)-new Date(a.Date));
+    // ✅ CreatedAt 기준 정렬
+    const sorted = sortByCreatedAt(counsels);
     const filtered = sorted.filter(c => !q || [c.StudentName,c.ParentName,c.Content,c.TeacherName,c.Date].some(v=>String(v).includes(q)));
     return (
         <div className="fade-in" style={{display:'flex',flexDirection:'column',gap:12,paddingBottom:40}}>
@@ -1615,9 +1593,7 @@ const App = () => {
     const handleSetupDone = (u) => setUser(u);
 
     if (!user) return <LoginScreen onLogin={handleLogin}/>;
-    // 강사 첫 로그인 → 담당반 선택만 (비번 변경 없음)
     if (user.role==='teacher' && user.isFirst) return <SetupScreen user={user} onDone={handleSetupDone}/>;
-    // 일반 관리자 첫 로그인 → 비번 변경 건너뜀 (바로 진입)
     if (user.role==='admin' && !user.isSuper && user.isFirst) return <AdminApp user={{...user, isFirst:false}} onLogout={handleLogout}/>;
     if (user.role==='admin') return <AdminApp user={user} onLogout={handleLogout}/>;
     return <TeacherApp user={user} onLogout={handleLogout}/>;
