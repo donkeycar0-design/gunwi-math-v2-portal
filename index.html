@@ -302,6 +302,10 @@ const api = {
             await sbFetch('journals', { method:'POST', body: JSON.stringify({ id:uuid(), date:payload.date, teacher_name:payload.teacherName, content:payload.content }) });
             return { success:true };
         }
+        if (action === 'updateJournal') {
+            await sbFetch(`journals?id=eq.${payload.id}`, { method:'PATCH', body: JSON.stringify({ date:payload.date, content:payload.content }) });
+            return { success:true };
+        }
         if (action === 'deleteJournal') {
             await sbFetch(`journals?id=eq.${payload.id}`, { method:'DELETE' });
             return { success:true };
@@ -312,6 +316,10 @@ const api = {
             await sbFetch('absences', { method:'POST', body: JSON.stringify({ id:uuid(), date:payload.date, student_name:payload.studentName, class_name:payload.className||'', reason:payload.reason, teacher_name:payload.teacherName }) });
             return { success:true };
         }
+        if (action === 'updateAbsence') {
+            await sbFetch(`absences?id=eq.${payload.id}`, { method:'PATCH', body: JSON.stringify({ date:payload.date, student_name:payload.studentName, class_name:payload.className||'', reason:payload.reason }) });
+            return { success:true };
+        }
         if (action === 'deleteAbsence') {
             await sbFetch(`absences?id=eq.${payload.id}`, { method:'DELETE' });
             return { success:true };
@@ -320,6 +328,10 @@ const api = {
         // ── 상담 ──
         if (action === 'addCounsel') {
             await sbFetch('counsels', { method:'POST', body: JSON.stringify({ id:uuid(), date:payload.date, student_name:payload.studentName, parent_name:payload.parentName||'', content:payload.content, teacher_name:payload.teacherName }) });
+            return { success:true };
+        }
+        if (action === 'updateCounsel') {
+            await sbFetch(`counsels?id=eq.${payload.id}`, { method:'PATCH', body: JSON.stringify({ date:payload.date, student_name:payload.studentName, parent_name:payload.parentName||'', content:payload.content }) });
             return { success:true };
         }
         if (action === 'deleteCounsel') {
@@ -946,11 +958,12 @@ const NoticeView = ({ notices: initialNotices, isAdmin, showToast, reload }) => 
 
 // ━━━ 근무 일지 (강사) ━━━
 const JournalView = ({ journals: initialJournals, user, today, showToast, reload }) => {
-    const [journals,  setJournals]  = useState(initialJournals);
-    const [showModal, setShowModal] = useState(false);
-    const [content,   setContent]   = useState('');
-    const [selDate,   setSelDate]   = useState(today);
-    const [saving,    setSaving]    = useState(false);
+    const [journals,   setJournals]  = useState(initialJournals);
+    const [showModal,  setShowModal] = useState(false);
+    const [content,    setContent]   = useState('');
+    const [selDate,    setSelDate]   = useState(today);
+    const [saving,     setSaving]    = useState(false);
+    const [editTarget, setEditTarget]= useState(null); // 수정할 ID
 
     useEffect(() => { setJournals(initialJournals); }, [initialJournals]);
 
@@ -961,29 +974,86 @@ const JournalView = ({ journals: initialJournals, user, today, showToast, reload
     const handleSave = async () => {
         if (!content.trim()) return;
         setSaving(true);
-        const tempId = 'temp-' + Date.now();
-        const newJ = { ID:tempId, Date:selDate, TeacherName:user.name, Content:content.trim(), CreatedAt:new Date().toISOString() };
-        // ✅ 화면 즉시 반영
-        setJournals(prev => [newJ, ...prev]);
-        setContent(''); setShowModal(false);
-        showToast('일지가 저장되었습니다');
-        // 백그라운드 저장
-        try { await api.post({ action:'addJournal', date:selDate, teacherName:user.name, content:content.trim() }); reload(); }
-        catch(e){ showToast('저장 실패','error'); reload(); }
+        if (editTarget) {
+            // ✅ Supabase PATCH — 화면 즉시 반영
+            setJournals(prev => prev.map(j => j.ID===editTarget ? {...j, Content:content.trim(), Date:selDate} : j));
+            showToast('일지가 수정되었습니다');
+            setContent(''); setSelDate(today); setShowModal(false); setEditTarget(null);
+            try { await api.post({ action:'updateJournal', id:editTarget, date:selDate, content:content.trim() }); reload(); }
+            catch(e){ showToast('수정 실패','error'); reload(); }
+        } else {
+            const tempId = 'temp-' + Date.now();
+            const newJ = { ID:tempId, Date:selDate, TeacherName:user.name, Content:content.trim(), CreatedAt:new Date().toISOString() };
+            setJournals(prev => [newJ, ...prev]);
+            showToast('일지가 저장되었습니다');
+            setContent(''); setShowModal(false);
+            try { await api.post({ action:'addJournal', date:selDate, teacherName:user.name, content:content.trim() }); reload(); }
+            catch(e){ showToast('저장 실패','error'); reload(); }
+        }
         setSaving(false);
+    };
+
+    const handleEdit = (j) => {
+        setContent(j.Content);
+        setSelDate(normalizeDate(j.Date));
+        setEditTarget(j.ID);
+        setShowModal(true);
     };
 
     const handleDelete = async (id) => {
         if (!confirm('이 일지를 삭제하시겠습니까?')) return;
         const safeId = String(id||'').trim();
         if (!safeId) { showToast('삭제 실패: ID 없음','error'); return; }
-        // ✅ 화면 즉시 반영
         setJournals(prev => prev.filter(j => j.ID !== id));
         showToast('삭제되었습니다');
-        // 백그라운드 삭제
         try { await api.post({ action:'deleteJournal', id:safeId }); reload(); }
         catch(e){ showToast('삭제 실패','error'); reload(); }
     };
+
+    return (
+        <div className="fade-in" style={{display:'flex',flexDirection:'column',gap:12,paddingBottom:40}}>
+            <div style={{display:'flex',justifyContent:'flex-end'}}>
+                <button className="btn-primary btn-green" onClick={()=>{setContent('');setSelDate(today);setEditTarget(null);setShowModal(true);}}>
+                    <Icon name="pencil" size={15}/> 일지 작성
+                </button>
+            </div>
+            {myJournals.length===0 ? <div className="empty-box"><p style={{fontWeight:700}}>작성한 일지가 없습니다</p></div> :
+                myJournals.map(j=>(
+                    <div key={j.ID} className="list-item" style={{position:'relative',paddingRight:72}}>
+                        <div className="list-meta">
+                            <span className="badge badge-done">{formatDate(j.Date)}</span>
+                            <span>{j.TeacherName}</span>
+                        </div>
+                        <div className="list-content">{j.Content}</div>
+                        <div style={{position:'absolute',top:12,right:12,display:'flex',gap:4}}>
+                            <button onClick={()=>handleEdit(j)} style={{color:'#94a3b8',padding:6,borderRadius:8,background:'#f8fafc'}} title="수정">
+                                <Icon name="pencil" size={13}/>
+                            </button>
+                            <button onClick={()=>handleDelete(j.ID)} style={{color:'#cbd5e1',padding:6,borderRadius:8,background:'#f8fafc'}} title="삭제">
+                                <Icon name="trash" size={13}/>
+                            </button>
+                        </div>
+                    </div>
+                ))
+            }
+            {showModal && (
+                <div className="modal-overlay" onClick={e=>e.target===e.currentTarget&&(setShowModal(false),setEditTarget(null))}>
+                    <div className="modal-box">
+                        <div className="modal-title">{editTarget?'근무 일지 수정':'근무 일지 작성'}</div>
+                        <div><div className="form-label">날짜</div><input className="form-input" type="date" value={selDate} onChange={e=>setSelDate(e.target.value)}/></div>
+                        <div><div className="form-label">내용</div><textarea className="form-textarea" value={content} onChange={e=>setContent(e.target.value)} placeholder="오늘 특이사항, 수업 내용 등을 자유롭게 작성해 주세요" style={{minHeight:140}}/></div>
+                        <div className="modal-btns">
+                            <button className="btn-cancel" onClick={()=>{setShowModal(false);setEditTarget(null);}}>취소</button>
+                            <button className="btn-confirm" style={{background:'#10b981'}} onClick={handleSave} disabled={saving}>
+                                {saving?'저장 중...':editTarget?'수정':'저장'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+};
 
     return (
         <div className="fade-in" style={{display:'flex',flexDirection:'column',gap:12,paddingBottom:40}}>
@@ -1029,10 +1099,11 @@ const JournalView = ({ journals: initialJournals, user, today, showToast, reload
 
 // ━━━ 결석 사유 (강사) ━━━
 const AbsenceView = ({ absences: initialAbsences, user, today, showToast, reload }) => {
-    const [absences,  setAbsences]  = useState(initialAbsences);
-    const [showModal, setShowModal] = useState(false);
-    const [form,      setForm]      = useState({ date:today, studentName:'', className:'', reason:'' });
-    const [saving,    setSaving]    = useState(false);
+    const [absences,   setAbsences]  = useState(initialAbsences);
+    const [showModal,  setShowModal] = useState(false);
+    const [form,       setForm]      = useState({ date:today, studentName:'', className:'', reason:'' });
+    const [saving,     setSaving]    = useState(false);
+    const [editTarget, setEditTarget]= useState(null);
 
     useEffect(() => { setAbsences(initialAbsences); }, [initialAbsences]);
 
@@ -1048,28 +1119,41 @@ const AbsenceView = ({ absences: initialAbsences, user, today, showToast, reload
     const handleSave = async () => {
         if (!form.studentName.trim()||!form.reason.trim()) return;
         setSaving(true);
-        const tempId = 'temp-' + Date.now();
-        const newA = { ID:tempId, ...form, TeacherName:user.name, CreatedAt:new Date().toISOString() };
-        // ✅ 화면 즉시 반영
-        setAbsences(prev => [newA, ...prev]);
-        setForm({date:today,studentName:'',className:'',reason:''}); setShowModal(false);
-        showToast('결석 사유가 저장되었습니다');
-        // 백그라운드 저장
-        try { await api.post({ action:'addAbsence', ...form, teacherName:user.name }); reload(); }
-        catch(e){ showToast('저장 실패','error'); reload(); }
+        if (editTarget) {
+            // ✅ Supabase PATCH
+            setAbsences(prev => prev.map(a => a.ID===editTarget ? {...a, ...form, StudentName:form.studentName, ClassName:form.className, Reason:form.reason, Date:form.date} : a));
+            showToast('결석 사유가 수정되었습니다');
+            setForm({date:today,studentName:'',className:'',reason:''}); setShowModal(false); setEditTarget(null);
+            try { await api.post({ action:'updateAbsence', id:editTarget, ...form }); reload(); }
+            catch(e){ showToast('수정 실패','error'); reload(); }
+        } else {
+            const tempId = 'temp-' + Date.now();
+            const newA = { ID:tempId, Date:form.date, StudentName:form.studentName, ClassName:form.className, Reason:form.reason, TeacherName:user.name, CreatedAt:new Date().toISOString() };
+            setAbsences(prev => [newA, ...prev]);
+            showToast('결석 사유가 저장되었습니다');
+            setForm({date:today,studentName:'',className:'',reason:''}); setShowModal(false);
+            try { await api.post({ action:'addAbsence', ...form, teacherName:user.name }); reload(); }
+            catch(e){ showToast('저장 실패','error'); reload(); }
+        }
         setSaving(false);
+    };
+
+    const handleEdit = (a) => {
+        setForm({ date:normalizeDate(a.Date), studentName:a.StudentName, className:a.ClassName||'', reason:a.Reason });
+        setEditTarget(a.ID);
+        setShowModal(true);
     };
 
     return (
         <div className="fade-in" style={{display:'flex',flexDirection:'column',gap:12,paddingBottom:40}}>
             <div style={{display:'flex',justifyContent:'flex-end'}}>
-                <button className="btn-primary btn-red" onClick={()=>setShowModal(true)}>
+                <button className="btn-primary btn-red" onClick={()=>{setForm({date:today,studentName:'',className:'',reason:''});setEditTarget(null);setShowModal(true);}}>
                     <Icon name="plus" size={15}/> 결석 사유 입력
                 </button>
             </div>
             {myAbsences.length===0 ? <div className="empty-box"><p style={{fontWeight:700}}>입력한 결석 사유가 없습니다</p></div> :
                 myAbsences.map(a=>(
-                    <div key={a.ID} className="list-item" style={{position:'relative',paddingRight:48}}>
+                    <div key={a.ID} className="list-item" style={{position:'relative',paddingRight:72}}>
                         <div className="list-meta">
                             <span className="badge badge-new">{formatDate(a.Date)}</span>
                             <span style={{fontWeight:900,color:'#1e293b'}}>{a.StudentName}</span>
@@ -1077,12 +1161,14 @@ const AbsenceView = ({ absences: initialAbsences, user, today, showToast, reload
                         </div>
                         <div className="list-content">{a.Reason}</div>
                         <div style={{fontSize:11,fontWeight:700,color:'#cbd5e1'}}>{a.TeacherName}</div>
-                        <div style={{position:'absolute',top:12,right:12}}>
+                        <div style={{position:'absolute',top:12,right:12,display:'flex',gap:4}}>
+                            <button onClick={()=>handleEdit(a)} style={{color:'#94a3b8',padding:6,borderRadius:8,background:'#f8fafc'}} title="수정">
+                                <Icon name="pencil" size={13}/>
+                            </button>
                             <button onClick={async()=>{
                                 if(!confirm('이 결석 사유를 삭제하시겠습니까?')) return;
-                                const safeId = String(a.ID||a.id||'').trim();
+                                const safeId = String(a.ID||'').trim();
                                 if (!safeId) { showToast('삭제 실패: ID 없음','error'); return; }
-                                // ✅ 화면 즉시 반영
                                 setAbsences(prev => prev.filter(x => x.ID !== a.ID));
                                 showToast('삭제되었습니다');
                                 try { await api.post({action:'deleteAbsence',id:safeId}); reload(); }
@@ -1095,9 +1181,9 @@ const AbsenceView = ({ absences: initialAbsences, user, today, showToast, reload
                 ))
             }
             {showModal && (
-                <div className="modal-overlay" onClick={e=>e.target===e.currentTarget&&setShowModal(false)}>
+                <div className="modal-overlay" onClick={e=>e.target===e.currentTarget&&(setShowModal(false),setEditTarget(null))}>
                     <div className="modal-box">
-                        <div className="modal-title">결석 사유 입력</div>
+                        <div className="modal-title">{editTarget?'결석 사유 수정':'결석 사유 입력'}</div>
                         <div><div className="form-label">날짜</div>
                             <input className="form-input" type="date" value={form.date} onChange={e=>setForm(f=>({...f,date:e.target.value}))}/>
                         </div>
@@ -1114,8 +1200,8 @@ const AbsenceView = ({ absences: initialAbsences, user, today, showToast, reload
                             <textarea className="form-textarea" value={form.reason} onChange={e=>setForm(f=>({...f,reason:e.target.value}))} placeholder="결석 사유를 입력해 주세요"/>
                         </div>
                         <div className="modal-btns">
-                            <button className="btn-cancel" onClick={()=>setShowModal(false)}>취소</button>
-                            <button className="btn-confirm" style={{background:'#ef4444'}} onClick={handleSave} disabled={saving}>{saving?'저장 중...':'저장'}</button>
+                            <button className="btn-cancel" onClick={()=>{setShowModal(false);setEditTarget(null);}}>취소</button>
+                            <button className="btn-confirm" style={{background:'#ef4444'}} onClick={handleSave} disabled={saving}>{saving?'저장 중...':editTarget?'수정':'저장'}</button>
                         </div>
                     </div>
                 </div>
@@ -1126,10 +1212,11 @@ const AbsenceView = ({ absences: initialAbsences, user, today, showToast, reload
 
 // ━━━ 학부모 상담 (강사) ━━━
 const CounselView = ({ counsels: initialCounsels, user, today, showToast, reload }) => {
-    const [counsels,  setCounsels]  = useState(initialCounsels);
-    const [showModal, setShowModal] = useState(false);
-    const [form,      setForm]      = useState({ date:today, studentName:'', parentName:'', content:'' });
-    const [saving,    setSaving]    = useState(false);
+    const [counsels,   setCounsels]  = useState(initialCounsels);
+    const [showModal,  setShowModal] = useState(false);
+    const [form,       setForm]      = useState({ date:today, studentName:'', parentName:'', content:'' });
+    const [saving,     setSaving]    = useState(false);
+    const [editTarget, setEditTarget]= useState(null);
 
     useEffect(() => { setCounsels(initialCounsels); }, [initialCounsels]);
 
@@ -1140,26 +1227,37 @@ const CounselView = ({ counsels: initialCounsels, user, today, showToast, reload
     const handleSave = async () => {
         if (!form.studentName.trim()||!form.content.trim()) return;
         setSaving(true);
-        const tempId = 'temp-' + Date.now();
-        const newC = { ID:tempId, Date:form.date, StudentName:form.studentName, ParentName:form.parentName||'', Content:form.content, TeacherName:user.name, CreatedAt:new Date().toISOString() };
-        // ✅ 화면 즉시 반영
-        setCounsels(prev => [newC, ...prev]);
-        setForm({date:today,studentName:'',parentName:'',content:''}); setShowModal(false);
-        showToast('상담 기록이 저장되었습니다');
-        // 백그라운드 저장
-        try { await api.post({ action:'addCounsel', ...form, teacherName:user.name }); reload(); }
-        catch(e){ showToast('저장 실패','error'); reload(); }
+        if (editTarget) {
+            // ✅ Supabase PATCH
+            setCounsels(prev => prev.map(c => c.ID===editTarget ? {...c, Date:form.date, StudentName:form.studentName, ParentName:form.parentName||'', Content:form.content} : c));
+            showToast('상담 기록이 수정되었습니다');
+            setForm({date:today,studentName:'',parentName:'',content:''}); setShowModal(false); setEditTarget(null);
+            try { await api.post({ action:'updateCounsel', id:editTarget, ...form }); reload(); }
+            catch(e){ showToast('수정 실패','error'); reload(); }
+        } else {
+            const tempId = 'temp-' + Date.now();
+            const newC = { ID:tempId, Date:form.date, StudentName:form.studentName, ParentName:form.parentName||'', Content:form.content, TeacherName:user.name, CreatedAt:new Date().toISOString() };
+            setCounsels(prev => [newC, ...prev]);
+            showToast('상담 기록이 저장되었습니다');
+            setForm({date:today,studentName:'',parentName:'',content:''}); setShowModal(false);
+            try { await api.post({ action:'addCounsel', ...form, teacherName:user.name }); reload(); }
+            catch(e){ showToast('저장 실패','error'); reload(); }
+        }
         setSaving(false);
+    };
+
+    const handleEdit = (c) => {
+        setForm({ date:normalizeDate(c.Date), studentName:c.StudentName, parentName:c.ParentName||'', content:c.Content });
+        setEditTarget(c.ID);
+        setShowModal(true);
     };
 
     const handleDelete = async (id) => {
         if (!confirm('이 상담 기록을 삭제하시겠습니까?')) return;
         const safeId = String(id||'').trim();
         if (!safeId) { showToast('삭제 실패: ID 없음','error'); return; }
-        // ✅ 화면 즉시 반영
         setCounsels(prev => prev.filter(c => c.ID !== id));
         showToast('삭제되었습니다');
-        // 백그라운드 삭제
         try { await api.post({ action:'deleteCounsel', id:safeId }); reload(); }
         catch(e){ showToast('삭제 실패','error'); reload(); }
     };
@@ -1167,13 +1265,13 @@ const CounselView = ({ counsels: initialCounsels, user, today, showToast, reload
     return (
         <div className="fade-in" style={{display:'flex',flexDirection:'column',gap:12,paddingBottom:40}}>
             <div style={{display:'flex',justifyContent:'flex-end'}}>
-                <button className="btn-primary btn-purple" onClick={()=>{setForm({date:today,studentName:'',parentName:'',content:''});setShowModal(true);}}>
+                <button className="btn-primary btn-purple" onClick={()=>{setForm({date:today,studentName:'',parentName:'',content:''});setEditTarget(null);setShowModal(true);}}>
                     <Icon name="chat" size={15}/> 상담 기록 추가
                 </button>
             </div>
             {myCounsels.length===0 ? <div className="empty-box"><p style={{fontWeight:700}}>상담 기록이 없습니다</p></div> :
                 myCounsels.map(c=>(
-                    <div key={c.ID} className="list-item" style={{position:'relative',paddingRight:48}}>
+                    <div key={c.ID} className="list-item" style={{position:'relative',paddingRight:72}}>
                         <div className="list-meta">
                             <span className="badge badge-blue">{formatDate(c.Date)}</span>
                             <span style={{fontWeight:900,color:'#1e293b'}}>{c.StudentName}</span>
@@ -1181,7 +1279,10 @@ const CounselView = ({ counsels: initialCounsels, user, today, showToast, reload
                         </div>
                         <div className="list-content">{c.Content}</div>
                         <div style={{fontSize:11,fontWeight:700,color:'#cbd5e1'}}>{c.TeacherName}</div>
-                        <div style={{position:'absolute',top:12,right:12}}>
+                        <div style={{position:'absolute',top:12,right:12,display:'flex',gap:4}}>
+                            <button onClick={()=>handleEdit(c)} style={{color:'#94a3b8',padding:6,borderRadius:8,background:'#f8fafc'}} title="수정">
+                                <Icon name="pencil" size={13}/>
+                            </button>
                             <button onClick={()=>handleDelete(c.ID)} style={{color:'#cbd5e1',padding:6,borderRadius:8,background:'#f8fafc'}} title="삭제">
                                 <Icon name="trash" size={13}/>
                             </button>
@@ -1190,17 +1291,17 @@ const CounselView = ({ counsels: initialCounsels, user, today, showToast, reload
                 ))
             }
             {showModal && (
-                <div className="modal-overlay" onClick={e=>e.target===e.currentTarget&&setShowModal(false)}>
+                <div className="modal-overlay" onClick={e=>e.target===e.currentTarget&&(setShowModal(false),setEditTarget(null))}>
                     <div className="modal-box">
-                        <div className="modal-title">학부모 상담 기록</div>
+                        <div className="modal-title">{editTarget?'상담 기록 수정':'학부모 상담 기록'}</div>
                         <div><div className="form-label">날짜</div><input className="form-input" type="date" value={form.date} onChange={e=>setForm(f=>({...f,date:e.target.value}))}/></div>
                         <div><div className="form-label">학생 이름</div><input className="form-input" value={form.studentName} onChange={e=>setForm(f=>({...f,studentName:e.target.value}))} placeholder="학생 이름"/></div>
                         <div><div className="form-label">학부모 이름 (선택)</div><input className="form-input" value={form.parentName} onChange={e=>setForm(f=>({...f,parentName:e.target.value}))} placeholder="학부모 성함"/></div>
                         <div><div className="form-label">상담 내용</div><textarea className="form-textarea" value={form.content} onChange={e=>setForm(f=>({...f,content:e.target.value}))} placeholder="상담 내용을 입력해 주세요" style={{minHeight:140}}/></div>
                         <div className="modal-btns">
-                            <button className="btn-cancel" onClick={()=>setShowModal(false)}>취소</button>
+                            <button className="btn-cancel" onClick={()=>{setShowModal(false);setEditTarget(null);}}>취소</button>
                             <button className="btn-confirm" style={{background:'#8b5cf6'}} onClick={handleSave} disabled={saving}>
-                                {saving?'저장 중...':'저장'}
+                                {saving?'저장 중...':editTarget?'수정':'저장'}
                             </button>
                         </div>
                     </div>
