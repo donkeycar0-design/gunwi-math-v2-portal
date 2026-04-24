@@ -1055,47 +1055,6 @@ const JournalView = ({ journals: initialJournals, user, today, showToast, reload
     );
 };
 
-    return (
-        <div className="fade-in" style={{display:'flex',flexDirection:'column',gap:12,paddingBottom:40}}>
-            <div style={{display:'flex',justifyContent:'flex-end'}}>
-                <button className="btn-primary btn-green" onClick={()=>{setContent('');setSelDate(today);setShowModal(true);}}>
-                    <Icon name="pencil" size={15}/> 일지 작성
-                </button>
-            </div>
-            {myJournals.length===0 ? <div className="empty-box"><p style={{fontWeight:700}}>작성한 일지가 없습니다</p></div> :
-                myJournals.map(j=>(
-                    <div key={j.ID} className="list-item" style={{position:'relative',paddingRight:48}}>
-                        <div className="list-meta">
-                            <span className="badge badge-done">{formatDate(j.Date)}</span>
-                            <span>{j.TeacherName}</span>
-                        </div>
-                        <div className="list-content">{j.Content}</div>
-                        <div style={{position:'absolute',top:12,right:12}}>
-                            <button onClick={()=>handleDelete(j.ID)} style={{color:'#cbd5e1',padding:6,borderRadius:8,background:'#f8fafc'}} title="삭제">
-                                <Icon name="trash" size={13}/>
-                            </button>
-                        </div>
-                    </div>
-                ))
-            }
-            {showModal && (
-                <div className="modal-overlay" onClick={e=>e.target===e.currentTarget&&setShowModal(false)}>
-                    <div className="modal-box">
-                        <div className="modal-title">근무 일지 작성</div>
-                        <div><div className="form-label">날짜</div><input className="form-input" type="date" value={selDate} onChange={e=>setSelDate(e.target.value)}/></div>
-                        <div><div className="form-label">내용</div><textarea className="form-textarea" value={content} onChange={e=>setContent(e.target.value)} placeholder="오늘 특이사항, 수업 내용 등을 자유롭게 작성해 주세요" style={{minHeight:140}}/></div>
-                        <div className="modal-btns">
-                            <button className="btn-cancel" onClick={()=>setShowModal(false)}>취소</button>
-                            <button className="btn-confirm" style={{background:'#10b981'}} onClick={handleSave} disabled={saving}>
-                                {saving?'저장 중...':'저장'}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-        </div>
-    );
-};
 
 // ━━━ 결석 사유 (강사) ━━━
 const AbsenceView = ({ absences: initialAbsences, user, today, showToast, reload }) => {
