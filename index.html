@@ -89,9 +89,9 @@
     .btn-sm { padding: 8px 14px; font-size: 12px; border-radius: 10px; }
 
     /* ── 모달 ── */
-    .modal-overlay { position: fixed; inset: 0; z-index: 100; background: rgba(15,23,42,.4); backdrop-filter: blur(6px); display: flex; align-items: center; justify-content: center; padding: 16px; }
+    .modal-overlay { position: fixed; inset: 0; z-index: 100; background: rgba(15,23,42,.4); backdrop-filter: blur(6px); display: flex; align-items: center; justify-content: center; padding: 16px; padding-top: 10vh; }
     @media (max-width: 768px) {
-        .modal-overlay { align-items: flex-end; padding: 0; }
+        .modal-overlay { align-items: flex-end; padding: 0; padding-bottom: 0; }
         .modal-box { border-radius: 28px 28px 0 0 !important; max-height: 90dvh; padding: 24px 20px !important; animation: slideUp .3s ease both !important; }
     }
     @keyframes slideUp { from { transform: translateY(60px); opacity:0; } to { transform: translateY(0); opacity:1; } }
