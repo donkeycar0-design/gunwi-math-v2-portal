@@ -91,8 +91,10 @@
     /* ── 모달 ── */
     .modal-overlay { position: fixed; inset: 0; z-index: 100; background: rgba(15,23,42,.4); backdrop-filter: blur(6px); display: flex; align-items: center; justify-content: center; padding: 16px; }
     @media (max-width: 768px) {
-        .modal-overlay { align-items: flex-end; padding: 0; padding-bottom: 0; }
-        .modal-box { border-radius: 28px 28px 0 0 !important; max-height: 90dvh; padding: 24px 20px !important; animation: slideUp .3s ease both !important; }
+        .modal-overlay { align-items: flex-start; padding: 16px; padding-top: 8vh; }
+        .modal-box { border-radius: 24px !important; max-height: 88dvh; padding: 22px 18px !important; }
+        .modal-box.modal-down { margin-top: 35vh !important; }
+        .modal-box.modal-up   { margin-top: -5vh  !important; }
     }
     @keyframes slideUp { from { transform: translateY(60px); opacity:0; } to { transform: translateY(0); opacity:1; } }
     .modal-box { background: #fff; width: 100%; max-width: 440px; border-radius: 32px; padding: 28px; box-shadow: 0 24px 64px rgba(0,0,0,.15); animation: scaleIn .25s cubic-bezier(.34,1.56,.64,1) both; display: flex; flex-direction: column; gap: 12px; max-height: 85dvh; overflow-y: auto; }
@@ -1043,7 +1045,7 @@ const JournalView = ({ journals: initialJournals, user, today, showToast, reload
             }
             {showModal && (
                 <div className="modal-overlay" onClick={e=>e.target===e.currentTarget&&(setShowModal(false),setEditTarget(null))}>
-                    <div className="modal-box" style={{marginTop:'-8vh'}}>
+                    <div className="modal-box modal-up" style={{marginTop:'-8vh'}}>
                         <div><div className="form-label">날짜</div><input className="form-input" type="date" value={selDate} onChange={e=>setSelDate(e.target.value)}/></div>
                         <div><div className="form-label">내용</div><textarea className="form-textarea" value={content} onChange={e=>setContent(e.target.value)} placeholder="오늘 특이사항, 수업 내용 등을 자유롭게 작성해 주세요" style={{minHeight:120}}/></div>
                         <div className="modal-btns">
@@ -1145,7 +1147,7 @@ const AbsenceView = ({ absences: initialAbsences, user, today, showToast, reload
             }
             {showModal && (
                 <div className="modal-overlay" onClick={e=>e.target===e.currentTarget&&(setShowModal(false),setEditTarget(null))}>
-                    <div className="modal-box" style={{marginTop:'25vh'}}>
+                    <div className="modal-box modal-down" style={{marginTop:'25vh'}}>
                         <div className="modal-title">{editTarget?'결석 사유 수정':'결석 사유 입력'}</div>
                         <div><div className="form-label">날짜</div>
                             <input className="form-input" type="date" value={form.date} onChange={e=>setForm(f=>({...f,date:e.target.value}))}/>
@@ -1258,7 +1260,7 @@ const CounselView = ({ counsels: initialCounsels, user, today, showToast, reload
             }
             {showModal && (
                 <div className="modal-overlay" onClick={e=>e.target===e.currentTarget&&(setShowModal(false),setEditTarget(null))}>
-                    <div className="modal-box" style={{marginTop:'25vh'}}>
+                    <div className="modal-box modal-down" style={{marginTop:'25vh'}}>
                         <div className="modal-title">{editTarget?'상담 기록 수정':'학부모 상담 기록'}</div>
                         <div><div className="form-label">날짜</div><input className="form-input" type="date" value={form.date} onChange={e=>setForm(f=>({...f,date:e.target.value}))}/></div>
                         <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
