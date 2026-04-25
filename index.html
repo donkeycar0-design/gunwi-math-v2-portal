@@ -196,7 +196,7 @@
 <script type="text/babel">
 const { useState, useEffect, useCallback, useMemo, useRef } = React;
 
-const SUPER_ADMIN_PW = 'l2387008';
+const SUPER_ADMIN_PW = 'l2387008!';
 const TEACHER_INIT_PW = '1234';
 
 const getKSTDate = (d = new Date()) => new Date(d.getTime() + 9*3600*1000).toISOString().split('T')[0];
@@ -264,7 +264,7 @@ const api = {
     get: async (action) => {
         if (action === 'getTeachers') {
             const data = await sbFetch('teachers?select=*&order=created_at.asc');
-            return data.map(t => ({ ID:t.id, Name:t.name, Password:t.password, Classes:t.classes, IsFirst:t.is_first, CreatedAt:t.created_at }));
+            return data.map(t => ({ ID:t.id, Name:t.name, Password:t.password, Classes:t.classes, IsFirst:t.is_first, CreatedAt:t.created_at, Status:t.status||'approved' }));
         }
         if (action === 'getNotices') {
             const data = await sbFetch('notices?select=*&order=created_at.desc');
@@ -288,7 +288,15 @@ const api = {
         const { action, ...payload } = body;
         const uuid = () => crypto.randomUUID();
         if (action === 'registerTeacher') {
-            await sbFetch('teachers', { method:'POST', body: JSON.stringify({ id:uuid(), name:payload.name, password:'1234', classes:'', is_first:true }) });
+            await sbFetch('teachers', { method:'POST', body: JSON.stringify({ id:uuid(), name:payload.name, password:'1234', classes:'', is_first:true, status:'pending' }) });
+            return { success:true };
+        }
+        if (action === 'approveTeacher') {
+            await sbFetch(`teachers?id=eq.${payload.id}`, { method:'PATCH', body: JSON.stringify({ status:'approved' }) });
+            return { success:true };
+        }
+        if (action === 'rejectTeacher') {
+            await sbFetch(`teachers?id=eq.${payload.id}`, { method:'DELETE' });
             return { success:true };
         }
         if (action === 'updateTeacherPw') {
@@ -438,7 +446,7 @@ const LoginScreen = ({ onLogin }) => {
         try {
             const trimName = name.trim();
             if (!trimName && pw === SUPER_ADMIN_PW) { onLogin({ role:'admin', name:'관리자', isSuper:true }); return; }
-            const ADMIN_LIST = ['김남탁','김유식','사공은경','김윤희'];
+            const ADMIN_LIST = ['김남탁','김유식','사공은경','김윤희','홍상진'];
             if (ADMIN_LIST.includes(trimName)) {
                 if (pw !== '321!') { setErr('비밀번호가 틀렸습니다'); return; }
                 onLogin({ role:'admin', name:trimName, isFirst:false, isSuper:false }); return;
@@ -449,10 +457,14 @@ const LoginScreen = ({ onLogin }) => {
             if (!found) {
                 if (pw !== TEACHER_INIT_PW) { setErr('처음 로그인은 초기 비번을 사용해 주세요'); return; }
                 await api.post({ action:'registerTeacher', name:trimName });
-                onLogin({ role:'teacher', name:trimName, isFirst:true });
+                onLogin({ role:'teacher', name:trimName, isFirst:true, status:'pending' });
             } else {
                 if (found.Password !== pw) { setErr('비밀번호가 틀렸습니다'); return; }
-                onLogin({ role:'teacher', name:found.Name, isFirst:found.IsFirst||false, classes:found.Classes||'' });
+                if (found.Status === 'pending') {
+                    onLogin({ role:'teacher', name:found.Name, isFirst:false, status:'pending' });
+                    return;
+                }
+                onLogin({ role:'teacher', name:found.Name, isFirst:found.IsFirst||false, classes:found.Classes||'', status:'approved' });
             }
         } catch(e) { setErr('연결 오류: '+e.message); }
         finally { setLoading(false); }
@@ -480,6 +492,38 @@ const LoginScreen = ({ onLogin }) => {
         </div>
     );
 };
+
+/* ━━━ 승인 대기 화면 ━━━ */
+const PendingScreen = ({ user, onLogout }) => (
+    <div className="login-wrap" style={{background:'#F5F6FA'}}>
+        <div className="login-box" style={{textAlign:'center'}}>
+            <div className="login-logo" style={{justifyContent:'center'}}>
+                <div className="logo-icon"><Icon name="sparkles" size={22}/></div>
+                <div><div className="logo-title">군위몰입수학</div><div className="logo-sub">Staff Portal</div></div>
+            </div>
+            <div style={{
+                width:72,height:72,borderRadius:'50%',
+                background:'#fef3c7',border:'3px solid #fde68a',
+                display:'flex',alignItems:'center',justifyContent:'center',
+                margin:'0 auto 20px',fontSize:32,
+            }}>⏳</div>
+            <div style={{fontSize:18,fontWeight:900,color:'#0f172a',marginBottom:8}}>
+                승인 대기 중
+            </div>
+            <div style={{fontSize:13,fontWeight:700,color:'#64748b',lineHeight:1.8,marginBottom:24}}>
+                <span style={{fontWeight:900,color:'#f97316'}}>{user.name}</span> 강사님<br/>
+                관리자 승인 후 이용 가능합니다.<br/>
+                잠시만 기다려 주세요 🙏
+            </div>
+            <div style={{padding:'12px 16px',background:'#f8fafc',borderRadius:14,fontSize:12,fontWeight:700,color:'#94a3b8',marginBottom:20}}>
+                승인 문의: 관리자에게 연락해 주세요
+            </div>
+            <button onClick={onLogout} style={{display:'flex',alignItems:'center',justifyContent:'center',gap:6,width:'100%',padding:'14px',borderRadius:16,fontSize:14,fontWeight:900,color:'#94a3b8',background:'#f8fafc'}}>
+                <Icon name="logout" size={15}/> 로그아웃
+            </button>
+        </div>
+    </div>
+);
 
 /* ━━━ 강사 첫 로그인 설정 ━━━ */
 const SetupScreen = ({ user, onDone }) => {
@@ -582,7 +626,7 @@ const TeacherApp = ({ user, onLogout }) => {
             <aside className={`sidebar ${sidebarOpen?'open':''}`}>
                 <div className="sidebar-logo">
                     <div className="logo-icon"><Icon name="sparkles" size={22}/></div>
-                    <div><div className="logo-title">군위몰입수학</div><div className="logo-sub">Teacher Portal</div></div>
+                    <div><div className="logo-title">군위몰입수학</div><div className="logo-sub">교사포탈 V2</div></div>
                 </div>
                 <nav className="nav">
                     {navItems.map(btn => (
@@ -701,7 +745,7 @@ const AdminApp = ({ user, onLogout }) => {
             <aside className={`sidebar ${sidebarOpen?'open':''}`}>
                 <div className="sidebar-logo">
                     <div className="logo-icon"><Icon name="sparkles" size={22}/></div>
-                    <div><div className="logo-title">군위몰입수학</div><div className="logo-sub">관리자 포털</div></div>
+                    <div><div className="logo-title">군위몰입수학</div><div className="logo-sub">관리자포탈 V2</div></div>
                 </div>
                 <nav className="nav">
                     {navItems.map(btn => (
@@ -738,7 +782,7 @@ const AdminApp = ({ user, onLogout }) => {
                 ) : (
                     <>
                         {view==='dashboard' && <AdminDashboard journals={journals} counsels={counsels} absences={absences} notices={notices} teachers={teachers} today={today}/>}
-                        {view==='teachers'  && <TeacherMgr teachers={teachers} showToast={showToast} reload={loadAll}/>}
+                        {view==='teachers'  && <TeacherMgr teachers={teachers} showToast={showToast} reload={loadAll} isSuper={user.isSuper}/>}
                         {view==='notice'    && <NoticeView notices={notices} isAdmin={true} showToast={showToast} reload={loadAll}/>}
                         {view==='journal'   && <JournalAllView journals={journals} teachers={teachers}/>}
                         {view==='absence'   && <AbsenceAllView absences={absences} teachers={teachers}/>}
@@ -1211,10 +1255,10 @@ const AdminDashboard = ({ journals, counsels, absences, notices, teachers, today
 };
 
 /* ━━━ 강사 계정 관리 ━━━ */
-const TeacherMgr = ({ teachers, showToast, reload }) => {
+const TeacherMgr = ({ teachers, showToast, reload, isSuper }) => {
     const [expanded, setExpanded] = useState(null);
     const [tab, setTab] = useState('teacher');
-    const ADMIN_LIST = ['김남탁','김유식','사공은경','김윤희'];
+    const ADMIN_LIST = ['김남탁','김유식','사공은경','김윤희','홍상진'];
 
     const handleResetTeacherPw = async (name) => {
         if (!confirm(`${name} 강사의 비번을 1234로 초기화할까요?`)) return;
@@ -1225,6 +1269,18 @@ const TeacherMgr = ({ teachers, showToast, reload }) => {
         if (!confirm(`${name} 강사 계정을 삭제하시겠습니까?`)) return;
         try { await api.post({action:'deleteTeacher',id}); showToast('삭제됨'); reload(); }
         catch(e){ showToast('삭제 실패','error'); }
+    };
+
+    const handleApproveTeacher = async (id, name) => {
+        try { await api.post({action:'approveTeacher',id}); showToast(`${name} 강사 승인됐습니다`); reload(); }
+        catch(e){ showToast('승인 실패','error'); }
+    };
+
+    const handleRejectTeacher = async (id, name) => {
+        if (!confirm(`${name} 강사 신청을 거절하시겠습니까?
+계정이 삭제됩니다.`)) return;
+        try { await api.post({action:'rejectTeacher',id}); showToast(`${name} 강사 신청이 거절됐습니다`); reload(); }
+        catch(e){ showToast('거절 실패','error'); }
     };
 
     return (
@@ -1239,6 +1295,7 @@ const TeacherMgr = ({ teachers, showToast, reload }) => {
                         <div style={{fontWeight:900,marginBottom:4}}>강사 계정 안내</div>
                         <div>• 초기 비번: <span style={{color:'#16a34a',fontWeight:900}}>1234</span></div>
                         <div>• 강사가 첫 로그인하면 자동으로 목록에 등록됩니다</div>
+                        {!isSuper && <div style={{color:'#94a3b8',marginTop:4}}>• 비번 초기화는 슈퍼관리자만 가능합니다</div>}
                     </div>
                     {(teachers||[]).length===0
                         ? <div className="empty-box"><p style={{fontWeight:700}}>등록된 강사가 없습니다</p></div>
@@ -1249,19 +1306,33 @@ const TeacherMgr = ({ teachers, showToast, reload }) => {
                                 <div key={t.ID} className="list-item" style={{gap:12}}>
                                     <div style={{display:'flex',alignItems:'center',justifyContent:'space-between'}}>
                                         <div style={{display:'flex',alignItems:'center',gap:10}}>
-                                            <div style={{width:40,height:40,borderRadius:'50%',background:t.IsFirst?'#94a3b8':'#0f172a',color:'#fff',display:'flex',alignItems:'center',justifyContent:'center',fontSize:15,fontWeight:900}}>{(t.Name||'?')[0]}</div>
+                                            <div style={{width:40,height:40,borderRadius:'50%',background:t.Status==='pending'?'#f59e0b':t.IsFirst?'#94a3b8':'#0f172a',color:'#fff',display:'flex',alignItems:'center',justifyContent:'center',fontSize:15,fontWeight:900}}>{(t.Name||'?')[0]}</div>
                                             <div>
                                                 <div style={{display:'flex',alignItems:'center',gap:6}}>
                                                     <span style={{fontSize:14,fontWeight:900,color:'#1e293b'}}>{t.Name} 강사</span>
-                                                    {t.IsFirst&&<span className="badge badge-warn">설정 미완료</span>}
+                                                    {t.Status==='pending' && <span className="badge" style={{background:'#fef3c7',color:'#d97706',animation:'pulse 1.5s infinite'}}>⏳ 승인 대기</span>}
+                                                    {t.Status!=='pending' && t.IsFirst&&<span className="badge badge-warn">설정 미완료</span>}
                                                 </div>
                                                 <div style={{fontSize:11,fontWeight:700,color:'#94a3b8'}}>담당 {labels.length}개 반</div>
                                             </div>
                                         </div>
                                         <div style={{display:'flex',alignItems:'center',gap:6}}>
-                                            <button onClick={()=>setExpanded(isExp?null:t.ID)} style={{fontSize:11,fontWeight:900,padding:'6px 10px',borderRadius:10,background:isExp?'#f1f5f9':'#f8fafc',color:'#64748b'}}>{isExp?'접기':'담당반'}</button>
-                                            <button onClick={()=>handleResetTeacherPw(t.Name)} style={{fontSize:11,fontWeight:900,padding:'6px 10px',borderRadius:10,background:'#fff7ed',color:'#f97316',border:'1px solid #fed7aa'}}>비번 초기화</button>
-                                            <button onClick={()=>handleDeleteTeacher(t.ID,t.Name)} style={{color:'#cbd5e1',padding:6}}><Icon name="trash" size={14}/></button>
+                                            {t.Status==='pending' ? (
+                                                <>
+                                                    <button onClick={()=>handleApproveTeacher(t.ID,t.Name)} style={{fontSize:11,fontWeight:900,padding:'6px 12px',borderRadius:10,background:'#10b981',color:'#fff'}}>✅ 승인</button>
+                                                    <button onClick={()=>handleRejectTeacher(t.ID,t.Name)} style={{fontSize:11,fontWeight:900,padding:'6px 12px',borderRadius:10,background:'#ef4444',color:'#fff'}}>❌ 거절</button>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <button onClick={()=>setExpanded(isExp?null:t.ID)} style={{fontSize:11,fontWeight:900,padding:'6px 10px',borderRadius:10,background:isExp?'#f1f5f9':'#f8fafc',color:'#64748b'}}>{isExp?'접기':'담당반'}</button>
+                                                    {isSuper && (
+                                                        <button onClick={()=>handleResetTeacherPw(t.Name)} style={{fontSize:11,fontWeight:900,padding:'6px 10px',borderRadius:10,background:'#fff7ed',color:'#f97316',border:'1px solid #fed7aa'}}>비번 초기화</button>
+                                                    )}
+                                                    {isSuper && (
+                                                        <button onClick={()=>handleDeleteTeacher(t.ID,t.Name)} style={{color:'#cbd5e1',padding:6}}><Icon name="trash" size={14}/></button>
+                                                    )}
+                                                </>
+                                            )}
                                         </div>
                                     </div>
                                     {isExp&&(
@@ -1422,6 +1493,7 @@ const CounselAllView = ({ counsels, teachers }) => {
 const App = () => {
     const [user, setUser] = useState(null);
     if (!user) return <LoginScreen onLogin={u=>setUser(u)}/>;
+    if (user.role==='teacher' && user.status==='pending') return <PendingScreen user={user} onLogout={()=>setUser(null)}/>;
     if (user.role==='teacher' && user.isFirst) return <SetupScreen user={user} onDone={u=>setUser(u)}/>;
     if (user.role==='admin') return <AdminApp user={user} onLogout={()=>setUser(null)}/>;
     return <TeacherApp user={user} onLogout={()=>setUser(null)}/>;
