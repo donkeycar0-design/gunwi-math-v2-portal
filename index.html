@@ -61,9 +61,6 @@
     .login-btn { width: 100%; padding: 16px; font-size: 15px; font-weight: 900; color: #fff; background: #0f172a; border-radius: 16px; margin-top: 8px; transition: background .15s; }
     .login-btn:hover { background: #1e293b; }
     .login-err { font-size: 12px; font-weight: 700; color: #ef4444; text-align: center; margin-top: 8px; }
-    .role-tabs { display: flex; gap: 8px; margin-bottom: 20px; }
-    .role-tab { flex: 1; padding: 10px; border-radius: 14px; font-size: 13px; font-weight: 900; background: #f8fafc; color: #94a3b8; transition: all .15s; }
-    .role-tab.active { background: #0f172a; color: #fff; }
 
     /* ── 폼 요소 ── */
     .form-input { width: 100%; background: #f8fafc; border: 2px solid transparent; border-radius: 14px; padding: 12px 16px; font-size: 13px; font-weight: 700; outline: none; transition: border-color .2s; color: #0f172a; }
@@ -88,13 +85,24 @@
     .btn-blue:hover { background: #2563eb; }
     .btn-sm { padding: 8px 14px; font-size: 12px; border-radius: 10px; }
 
+    /* ── 인쇄 버튼 ── */
+    .btn-print { padding: 10px 16px; background: #fff; border: 2px solid #e2e8f0; color: #475569; border-radius: 14px; font-size: 13px; font-weight: 900; transition: all .15s; display: flex; align-items: center; gap: 6px; }
+    .btn-print:hover { background: #0f172a; color: #fff; border-color: #0f172a; }
+
+    /* ── 날짜 필터 바 ── */
+    .date-filter-bar { display: flex; align-items: center; gap: 10px; background: #fff; border: 1px solid #f1f5f9; border-radius: 16px; padding: 12px 16px; box-shadow: 0 1px 4px rgba(0,0,0,.04); flex-wrap: wrap; }
+    .date-filter-label { font-size: 11px; font-weight: 900; color: #94a3b8; white-space: nowrap; }
+    .date-filter-input { padding: 8px 12px; background: #f8fafc; border: 2px solid transparent; border-radius: 12px; font-size: 12px; font-weight: 700; color: #475569; outline: none; transition: border-color .2s; }
+    .date-filter-input:focus { border-color: #fb923c; }
+    .date-filter-tilde { font-size: 12px; font-weight: 900; color: #cbd5e1; }
+    .date-filter-count { font-size: 11px; font-weight: 700; color: #94a3b8; margin-left: auto; }
+
     /* ── 모달 ── */
     .modal-overlay { position: fixed; inset: 0; z-index: 100; background: rgba(15,23,42,.4); backdrop-filter: blur(6px); display: flex; align-items: flex-start; justify-content: center; padding: 16px; padding-top: 6vh; }
     @media (max-width: 768px) {
         .modal-overlay { align-items: flex-start; padding: 16px; padding-top: 5vh; }
         .modal-box { border-radius: 24px !important; max-height: 88dvh; padding: 22px 18px !important; }
     }
-    @keyframes slideUp { from { transform: translateY(60px); opacity:0; } to { transform: translateY(0); opacity:1; } }
     .modal-box { background: #fff; width: 100%; max-width: 440px; border-radius: 32px; padding: 28px; box-shadow: 0 24px 64px rgba(0,0,0,.15); animation: scaleIn .25s cubic-bezier(.34,1.56,.64,1) both; display: flex; flex-direction: column; gap: 12px; max-height: 85dvh; overflow-y: auto; }
     .modal-title { font-size: 20px; font-weight: 900; color: #0f172a; margin-bottom: 4px; }
     .modal-btns { display: flex; gap: 8px; margin-top: 8px; }
@@ -149,36 +157,55 @@
         .main { padding: 20px 16px; padding-top: 72px; }
         .grid-2, .grid-3 { grid-template-columns: 1fr; }
         .header-title { font-size: 22px; }
+        .date-filter-bar { gap: 8px; }
     }
     @media (min-width: 769px) { .modal-overlay { align-items: flex-start; } }
+
+    /* ━━━ 인쇄 전용 CSS ━━━ */
+    @media print {
+        body { overflow: visible !important; height: auto !important; background: #fff !important; font-size: 12pt; }
+        .app-shell { display: block !important; height: auto !important; overflow: visible !important; }
+        .sidebar, .mobile-menu-btn, .sidebar-overlay { display: none !important; }
+        .main { padding: 0 !important; overflow: visible !important; height: auto !important; }
+        .main-header { display: none !important; }
+        .no-print { display: none !important; }
+        .print-only { display: block !important; }
+        .print-header { display: flex !important; }
+        .date-filter-bar { display: none !important; }
+        .list-item { break-inside: avoid; border: 1px solid #e2e8f0 !important; box-shadow: none !important; margin-bottom: 8pt; }
+        .list-item:hover { box-shadow: none !important; }
+        .btn-print, .btn-primary, .modal-overlay { display: none !important; }
+        .badge { border: 1px solid #e2e8f0; }
+        .notice-item { break-inside: avoid; }
+        /* 인쇄 구역 타이틀 */
+        .print-section-title {
+            font-size: 16pt; font-weight: 900; color: #0f172a;
+            border-bottom: 3px solid #0f172a; padding-bottom: 8pt;
+            margin: 16pt 0 10pt; display: flex; align-items: center; gap: 8pt;
+        }
+        .print-section-title.green { border-color: #10b981; color: #10b981; }
+        .print-section-title.red   { border-color: #ef4444; color: #ef4444; }
+        .print-section-title.purple{ border-color: #8b5cf6; color: #8b5cf6; }
+    }
+    .print-only { display: none; }
+    .print-header { display: none; }
     </style>
 </head>
 <body>
 <div id="root"></div>
 <script type="text/babel">
-const { useState, useEffect, useCallback, useMemo } = React;
+const { useState, useEffect, useCallback, useMemo, useRef } = React;
 
 const SUPER_ADMIN_PW = 'l2387008';
 const TEACHER_INIT_PW = '1234';
 
-const ADMIN_ACCOUNTS = [
-    {name:'김남탁',  password:'1234', isFirst:true},
-    {name:'김유식',  password:'1234', isFirst:true},
-    {name:'사공은경',password:'1234', isFirst:true},
-    {name:'김윤희',  password:'1234', isFirst:true},
-];
-
 const getKSTDate = (d = new Date()) => new Date(d.getTime() + 9*3600*1000).toISOString().split('T')[0];
-
-// ✅ TODAY는 컴포넌트 안에서 getKSTDate()로 매번 호출 (전역 상수 제거)
 
 const normalizeDate = val => {
     if (!val) return '';
     const s = String(val).replace(/^'+/, '').trim();
     if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
-    if (s.includes('T') || s.includes('Z')) {
-        return getKSTDate(new Date(s));
-    }
+    if (s.includes('T') || s.includes('Z')) return getKSTDate(new Date(s));
     return s.substring(0, 10);
 };
 
@@ -193,7 +220,6 @@ const formatDate = val => {
     return normalizeDate(val);
 };
 
-// ✅ CreatedAt 기준 내림차순 정렬 헬퍼
 const sortByCreatedAt = (arr) =>
     [...arr].sort((a, b) => new Date(b.CreatedAt) - new Date(a.CreatedAt));
 
@@ -245,28 +271,22 @@ const api = {
             return data.map(n => ({ ID:n.id, Title:n.title, Content:n.content, CreatedAt:n.created_at }));
         }
         if (action === 'getJournals') {
-            // ✅ created_at 내림차순으로 가져옴
             const data = await sbFetch('journals?select=*&order=created_at.desc');
             return data.map(j => ({ ID:j.id, Date:j.date, TeacherName:j.teacher_name, Content:j.content, CreatedAt:j.created_at }));
         }
         if (action === 'getAbsences') {
-            // ✅ created_at 내림차순으로 가져옴
             const data = await sbFetch('absences?select=*&order=created_at.desc');
             return data.map(a => ({ ID:a.id, Date:a.date, StudentName:a.student_name, ClassName:a.class_name, Reason:a.reason, TeacherName:a.teacher_name, CreatedAt:a.created_at }));
         }
         if (action === 'getCounsels') {
-            // ✅ created_at 내림차순으로 가져옴
             const data = await sbFetch('counsels?select=*&order=created_at.desc');
             return data.map(c => ({ ID:c.id, Date:c.date, StudentName:c.student_name, ParentName:c.parent_name, Content:c.content, TeacherName:c.teacher_name, CreatedAt:c.created_at }));
         }
-        if (action === 'getAdmins') return [];
         return [];
     },
     post: async (body) => {
         const { action, ...payload } = body;
         const uuid = () => crypto.randomUUID();
-
-        if (action === 'getTeachers') return api.get('getTeachers');
         if (action === 'registerTeacher') {
             await sbFetch('teachers', { method:'POST', body: JSON.stringify({ id:uuid(), name:payload.name, password:'1234', classes:'', is_first:true }) });
             return { success:true };
@@ -287,7 +307,6 @@ const api = {
             await sbFetch(`teachers?id=eq.${payload.id}`, { method:'DELETE' });
             return { success:true };
         }
-
         if (action === 'addNotice') {
             await sbFetch('notices', { method:'POST', body: JSON.stringify({ id:uuid(), title:payload.title, content:payload.content }) });
             return { success:true };
@@ -300,7 +319,6 @@ const api = {
             await sbFetch(`notices?id=eq.${payload.id}`, { method:'PATCH', body: JSON.stringify({ title:payload.title, content:payload.content }) });
             return { success:true };
         }
-
         if (action === 'addJournal') {
             await sbFetch('journals', { method:'POST', body: JSON.stringify({ id:uuid(), date:payload.date, teacher_name:payload.teacherName, content:payload.content }) });
             return { success:true };
@@ -313,7 +331,6 @@ const api = {
             await sbFetch(`journals?id=eq.${payload.id}`, { method:'DELETE' });
             return { success:true };
         }
-
         if (action === 'addAbsence') {
             await sbFetch('absences', { method:'POST', body: JSON.stringify({ id:uuid(), date:payload.date, student_name:payload.studentName, class_name:payload.className||'', reason:payload.reason, teacher_name:payload.teacherName }) });
             return { success:true };
@@ -326,7 +343,6 @@ const api = {
             await sbFetch(`absences?id=eq.${payload.id}`, { method:'DELETE' });
             return { success:true };
         }
-
         if (action === 'addCounsel') {
             await sbFetch('counsels', { method:'POST', body: JSON.stringify({ id:uuid(), date:payload.date, student_name:payload.studentName, parent_name:payload.parentName||'', content:payload.content, teacher_name:payload.teacherName }) });
             return { success:true };
@@ -339,10 +355,6 @@ const api = {
             await sbFetch(`counsels?id=eq.${payload.id}`, { method:'DELETE' });
             return { success:true };
         }
-
-        if (action === 'updateAdminPw') return { success:true };
-        if (action === 'resetAdminPw')  return { success:true };
-
         return { success:true };
     }
 };
@@ -360,6 +372,7 @@ const PATHS = {
     check:    "M4.5 12.75l6 6 9-13.5",
     plus:     "M12 4.5v15m7.5-7.5h-15",
     trash:    "M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0",
+    print:    "M6.72 13.829c-.24.03-.48.062-.72.096m.72-.096a42.415 42.415 0 0110.56 0m-10.56 0L6.34 18m10.94-4.171c.24.03.48.062.72.096m-.72-.096L17.66 18m0 0l.229 2.523a1.125 1.125 0 01-1.12 1.227H7.231c-.662 0-1.18-.568-1.12-1.227L6.34 18m11.318 0h1.091A2.25 2.25 0 0021 15.75V9.456c0-1.081-.768-2.015-1.837-2.175a48.055 48.055 0 00-1.913-.247M6.34 18H5.25A2.25 2.25 0 013 15.75V9.456c0-1.081.768-2.015 1.837-2.175a48.041 48.041 0 011.913-.247m10.5 0a48.536 48.536 0 00-10.5 0m10.5 0V3.375c0-.621-.504-1.125-1.125-1.125h-8.25c-.621 0-1.125.504-1.125 1.125v3.659M18 10.5h.008v.008H18V10.5zm-3 0h.008v.008H15V10.5z",
     eye:      "M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z M15 12a3 3 0 11-6 0 3 3 0 016 0z",
 };
 
@@ -373,42 +386,73 @@ const Toast = ({ message, type='success', onDone }) => {
     return <div className={`toast toast-${type}`}><Icon name={type==='success'?'check':'alert'} size={14}/>{message}</div>;
 };
 
-// ━━━ 로그인 화면 ━━━
+/* ━━━ 날짜 필터 + 인쇄 공통 바 ━━━ */
+const PrintFilterBar = ({ dateFrom, dateTo, onDateFrom, onDateTo, count, total, onPrint, teacherFilter, onTeacherFilter, teachers, showTeacherFilter=false }) => (
+    <div className="date-filter-bar no-print">
+        <span className="date-filter-label">📅 기간</span>
+        <input className="date-filter-input" type="date" value={dateFrom} onChange={e=>onDateFrom(e.target.value)}/>
+        <span className="date-filter-tilde">~</span>
+        <input className="date-filter-input" type="date" value={dateTo} onChange={e=>onDateTo(e.target.value)}/>
+        {showTeacherFilter && (
+            <select className="date-filter-input" value={teacherFilter} onChange={e=>onTeacherFilter(e.target.value)}
+                style={{minWidth:90}}>
+                <option value="ALL">전체 강사</option>
+                {teachers.map(t=><option key={t.ID||t.name} value={t.Name||t.name}>{t.Name||t.name}</option>)}
+            </select>
+        )}
+        {(dateFrom||dateTo) && (
+            <span className="date-filter-count">
+                <span style={{color:'#f97316',fontWeight:900}}>{count}건</span> / 전체 {total}건
+            </span>
+        )}
+        <button className="btn-print" onClick={onPrint} style={{marginLeft:'auto'}}>
+            <Icon name="print" size={15}/> 인쇄
+        </button>
+    </div>
+);
+
+/* ━━━ 인쇄 헤더 (인쇄 시에만 보임) ━━━ */
+const PrintHeader = ({ title, dateFrom, dateTo, teacherName }) => (
+    <div className="print-header" style={{flexDirection:'column',gap:4,marginBottom:20,paddingBottom:12,borderBottom:'2px solid #0f172a'}}>
+        <div style={{display:'flex',alignItems:'center',gap:12}}>
+            <div style={{fontSize:22,fontWeight:900,color:'#0f172a'}}>군위몰입수학</div>
+            <div style={{fontSize:16,fontWeight:700,color:'#64748b'}}>{title}</div>
+        </div>
+        <div style={{fontSize:12,color:'#64748b',display:'flex',gap:16}}>
+            {(dateFrom||dateTo) && <span>기간: {dateFrom||'처음'} ~ {dateTo||'현재'}</span>}
+            {teacherName && teacherName !== 'ALL' && <span>강사: {teacherName}</span>}
+            <span>출력일: {getKSTDate()}</span>
+        </div>
+    </div>
+);
+
+/* ━━━ 로그인 ━━━ */
 const LoginScreen = ({ onLogin }) => {
-    const [name,    setName]    = useState('');
-    const [pw,      setPw]      = useState('');
-    const [err,     setErr]     = useState('');
+    const [name, setName] = useState('');
+    const [pw,   setPw]   = useState('');
+    const [err,  setErr]  = useState('');
     const [loading, setLoading] = useState(false);
 
     const handleLogin = async () => {
         setErr(''); setLoading(true);
         try {
             const trimName = name.trim();
-
-            if (!trimName && pw === SUPER_ADMIN_PW) {
-                onLogin({ role:'admin', name:'관리자', isSuper:true });
-                return;
-            }
-
+            if (!trimName && pw === SUPER_ADMIN_PW) { onLogin({ role:'admin', name:'관리자', isSuper:true }); return; }
             const ADMIN_LIST = ['김남탁','김유식','사공은경','김윤희'];
             if (ADMIN_LIST.includes(trimName)) {
                 if (pw !== '321!') { setErr('비밀번호가 틀렸습니다'); return; }
-                onLogin({ role:'admin', name:trimName, isFirst:false, isSuper:false });
-                return;
+                onLogin({ role:'admin', name:trimName, isFirst:false, isSuper:false }); return;
             }
-
             if (!trimName) { setErr('이름을 입력해 주세요'); return; }
             const teachers = await api.get('getTeachers');
-            const foundTeacher = Array.isArray(teachers) ? teachers.find(t=>t.Name===trimName) : null;
-
-            if (!foundTeacher) {
+            const found = Array.isArray(teachers) ? teachers.find(t=>t.Name===trimName) : null;
+            if (!found) {
                 if (pw !== TEACHER_INIT_PW) { setErr('처음 로그인은 초기 비번을 사용해 주세요'); return; }
-                const res = await api.post({ action:'registerTeacher', name:trimName });
-                if (res.error) { setErr(res.error); return; }
+                await api.post({ action:'registerTeacher', name:trimName });
                 onLogin({ role:'teacher', name:trimName, isFirst:true });
             } else {
-                if (foundTeacher.Password !== pw) { setErr('비밀번호가 틀렸습니다'); return; }
-                onLogin({ role:'teacher', name:foundTeacher.Name, isFirst:foundTeacher.IsFirst||false, classes:foundTeacher.Classes||'' });
+                if (found.Password !== pw) { setErr('비밀번호가 틀렸습니다'); return; }
+                onLogin({ role:'teacher', name:found.Name, isFirst:found.IsFirst||false, classes:found.Classes||'' });
             }
         } catch(e) { setErr('연결 오류: '+e.message); }
         finally { setLoading(false); }
@@ -421,16 +465,10 @@ const LoginScreen = ({ onLogin }) => {
                     <div className="logo-icon"><Icon name="sparkles" size={22}/></div>
                     <div><div className="logo-title">군위몰입수학</div><div className="logo-sub">Staff Portal</div></div>
                 </div>
-                <div style={{marginBottom:20,fontSize:13,fontWeight:700,color:'#94a3b8',textAlign:'center'}}>
-                    이름과 비밀번호를 입력해 주세요
-                </div>
-                <input className="login-input" placeholder="이름" value={name}
-                    onChange={e=>setName(e.target.value)} onKeyDown={e=>e.key==='Enter'&&handleLogin()}/>
-                <input className="login-input" type="password" placeholder="비밀번호"
-                    value={pw} onChange={e=>setPw(e.target.value)} onKeyDown={e=>e.key==='Enter'&&handleLogin()}/>
-                <button className="login-btn" onClick={handleLogin} disabled={loading}>
-                    {loading?'확인 중...':'로그인'}
-                </button>
+                <div style={{marginBottom:20,fontSize:13,fontWeight:700,color:'#94a3b8',textAlign:'center'}}>이름과 비밀번호를 입력해 주세요</div>
+                <input className="login-input" placeholder="이름" value={name} onChange={e=>setName(e.target.value)} onKeyDown={e=>e.key==='Enter'&&handleLogin()}/>
+                <input className="login-input" type="password" placeholder="비밀번호" value={pw} onChange={e=>setPw(e.target.value)} onKeyDown={e=>e.key==='Enter'&&handleLogin()}/>
+                <button className="login-btn" onClick={handleLogin} disabled={loading}>{loading?'확인 중...':'로그인'}</button>
                 {err && <div className="login-err">{err}</div>}
                 <div style={{marginTop:16,padding:'12px 16px',background:'#fff7ed',borderRadius:14,fontSize:12,fontWeight:700,color:'#92400e',lineHeight:1.8}}>
                     <div style={{fontWeight:900,marginBottom:6}}>로그인 안내</div>
@@ -443,72 +481,22 @@ const LoginScreen = ({ onLogin }) => {
     );
 };
 
-// ━━━ 관리자 첫 로그인 셋업 ━━━
-const AdminSetupScreen = ({ user, onDone }) => {
-    const [newPw,     setNewPw]     = useState('');
-    const [confirmPw, setConfirmPw] = useState('');
-    const [err,       setErr]       = useState('');
-    const [saving,    setSaving]    = useState(false);
-
-    const handleFinish = async () => {
-        if (newPw.length < 4) { setErr('비번은 4자리 이상 입력해 주세요'); return; }
-        if (newPw !== confirmPw) { setErr('비번이 일치하지 않습니다'); return; }
-        setSaving(true);
-        try {
-            await api.post({ action:'updateAdminPw', name:user.name, newPw });
-            onDone({ ...user, isFirst:false });
-        } catch(e) { setErr('저장 실패: ' + e.message); }
-        finally { setSaving(false); }
-    };
-
-    return (
-        <div className="login-wrap" style={{background:'#F5F6FA'}}>
-            <div className="login-box">
-                <div className="login-logo">
-                    <div className="logo-icon"><Icon name="sparkles" size={22}/></div>
-                    <div><div className="logo-title">군위몰입수학</div><div className="logo-sub">관리자 첫 로그인</div></div>
-                </div>
-                <div style={{fontSize:13,fontWeight:700,color:'#64748b',marginBottom:20,textAlign:'center'}}>
-                    <span style={{fontWeight:900,color:'#0f172a'}}>{user.name}</span> 관리자님<br/>
-                    새 비밀번호를 설정해 주세요
-                </div>
-                <div style={{display:'flex',flexDirection:'column',gap:10,marginBottom:16}}>
-                    <input className="login-input" type="password" placeholder="새 비밀번호 (4자리 이상)"
-                        value={newPw} onChange={e=>setNewPw(e.target.value)} style={{marginBottom:0}}/>
-                    <input className="login-input" type="password" placeholder="비밀번호 확인"
-                        value={confirmPw} onChange={e=>setConfirmPw(e.target.value)}
-                        onKeyDown={e=>e.key==='Enter'&&handleFinish()} style={{marginBottom:0}}/>
-                </div>
-                {err && <div className="login-err" style={{marginBottom:10}}>{err}</div>}
-                <button className="login-btn" onClick={handleFinish} disabled={saving}>
-                    {saving?'저장 중...':'설정 완료 →'}
-                </button>
-            </div>
-        </div>
-    );
-};
-
-// ━━━ 첫 로그인 셋업 화면 (강사) ━━━
+/* ━━━ 강사 첫 로그인 설정 ━━━ */
 const SetupScreen = ({ user, onDone }) => {
     const [classes, setClasses] = useState([]);
-    const [err,     setErr]     = useState('');
-    const [saving,  setSaving]  = useState(false);
-
-    const toggleClass = id =>
-        setClasses(prev => prev.includes(id) ? prev.filter(c=>c!==id) : [...prev, id]);
-
+    const [saving, setSaving] = useState(false);
+    const toggleClass = id => setClasses(prev => prev.includes(id) ? prev.filter(c=>c!==id) : [...prev, id]);
     const handleFinish = async () => {
         setSaving(true);
         try {
             await api.post({ action:'updateTeacherClasses', name:user.name, classes:classes.join(',') });
             await api.post({ action:'updateTeacherPw', name:user.name, newPw: user.pw || '1234' });
             onDone({ ...user, isFirst:false, classes:classes.join(',') });
-        } catch(e) { setErr('저장 실패'); }
+        } catch(e) {}
         finally { setSaving(false); }
     };
-
     return (
-        <div className="login-wrap" style={{background:'#F5F6FA'}}>
+        <div className="login-wrap">
             <div className="login-box" style={{maxWidth:440}}>
                 <div className="login-logo">
                     <div className="logo-icon"><Icon name="sparkles" size={22}/></div>
@@ -524,21 +512,13 @@ const SetupScreen = ({ user, onDone }) => {
                             <div style={{fontSize:11,fontWeight:900,color:'#64748b',marginBottom:6,padding:'3px 8px',background:'#f1f5f9',borderRadius:8,display:'inline-block'}}>{g.grade}</div>
                             <div style={{display:'grid',gridTemplateColumns:'repeat(2,1fr)',gap:6}}>
                                 {g.classes.map(c=>{
-                                    const checked  = classes.includes(c.id);
-                                    const dayPart  = c.id.includes('-mw-')?'월목':'화금';
-                                    const typePart = c.id.endsWith('-s')?'수반':'학반';
+                                    const checked = classes.includes(c.id);
                                     return (
-                                        <button key={c.id} onClick={()=>toggleClass(c.id)} style={{
-                                            display:'flex',alignItems:'center',gap:8,padding:'10px 12px',borderRadius:12,
-                                            border:`2px solid ${checked?'#0f172a':'#f1f5f9'}`,
-                                            background:checked?'#0f172a':'#f8fafc',
-                                            color:checked?'#fff':'#64748b',
-                                            fontSize:12,fontWeight:900,transition:'all .15s',
-                                        }}>
+                                        <button key={c.id} onClick={()=>toggleClass(c.id)} style={{display:'flex',alignItems:'center',gap:8,padding:'10px 12px',borderRadius:12,border:`2px solid ${checked?'#0f172a':'#f1f5f9'}`,background:checked?'#0f172a':'#f8fafc',color:checked?'#fff':'#64748b',fontSize:12,fontWeight:900,transition:'all .15s'}}>
                                             <div style={{width:16,height:16,borderRadius:4,border:`2px solid ${checked?'#fff':'#cbd5e1'}`,background:checked?'#f97316':'transparent',flexShrink:0,display:'flex',alignItems:'center',justifyContent:'center'}}>
                                                 {checked&&<Icon name="check" size={10} style={{color:'#fff'}}/>}
                                             </div>
-                                            {dayPart} {typePart}
+                                            {c.id.includes('-mw-')?'월목':'화금'} {c.id.endsWith('-s')?'수반':'학반'}
                                         </button>
                                     );
                                 })}
@@ -546,68 +526,48 @@ const SetupScreen = ({ user, onDone }) => {
                         </div>
                     ))}
                 </div>
-                {err && <div className="login-err" style={{marginBottom:10}}>{err}</div>}
-                <button className="login-btn" onClick={handleFinish} disabled={saving}>
-                    {saving?'저장 중...':'설정 완료 →'}
-                </button>
+                <button className="login-btn" onClick={handleFinish} disabled={saving}>{saving?'저장 중...':'설정 완료 →'}</button>
             </div>
         </div>
     );
 };
 
-// ━━━ 강사 화면 ━━━
+/* ━━━ 강사 앱 ━━━ */
 const TeacherApp = ({ user, onLogout }) => {
-    const [view,       setView]      = useState('notice');
-    const [notices,    setNotices]   = useState([]);
-    const [journals,   setJournals]  = useState([]);
-    const [counsels,   setCounsels]  = useState([]);
-    const [absences,   setAbsences]  = useState([]);
-    const [loading,    setLoading]   = useState(true);
-    const [toast,      setToast]     = useState(null);
-    const [sidebarOpen,setSidebar]   = useState(false);
+    const [view, setView] = useState('notice');
+    const [notices, setNotices] = useState([]);
+    const [journals, setJournals] = useState([]);
+    const [counsels, setCounsels] = useState([]);
+    const [absences, setAbsences] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [toast, setToast] = useState(null);
+    const [sidebarOpen, setSidebar] = useState(false);
     const [showClassModal, setShowClassModal] = useState(false);
-    const [myClasses,  setMyClasses] = useState(
-        (user.classes||'').split(',').filter(Boolean)
-    );
+    const [myClasses, setMyClasses] = useState((user.classes||'').split(',').filter(Boolean));
     const [savingClass, setSavingClass] = useState(false);
     const showToast = (m,t='success') => setToast({message:m,type:t});
-
-    // ✅ today를 매번 현재 KST 날짜로 계산
     const today = getKSTDate();
 
-    const toggleClass = id =>
-        setMyClasses(prev => prev.includes(id) ? prev.filter(c=>c!==id) : [...prev, id]);
-
+    const toggleClass = id => setMyClasses(prev => prev.includes(id) ? prev.filter(c=>c!==id) : [...prev, id]);
     const handleClassSave = async () => {
         setSavingClass(true);
-        try {
-            await api.post({ action:'updateTeacherClasses', name:user.name, classes:myClasses.join(',') });
-            showToast('담당반이 변경되었습니다');
-            setShowClassModal(false);
-        } catch(e){ showToast('저장 실패','error'); }
+        try { await api.post({ action:'updateTeacherClasses', name:user.name, classes:myClasses.join(',') }); showToast('담당반이 변경되었습니다'); setShowClassModal(false); }
+        catch(e){ showToast('저장 실패','error'); }
         finally { setSavingClass(false); }
     };
 
     const loadAll = useCallback(async () => {
         setLoading(true);
         try {
-            const [n,j,c,a] = await Promise.all([
-                api.get('getNotices'),
-                api.get('getJournals'),
-                api.get('getCounsels'),
-                api.get('getAbsences'),
-            ]);
-            setNotices(Array.isArray(n)?n:[]);
-            setJournals(Array.isArray(j)?j:[]);
-            setCounsels(Array.isArray(c)?c:[]);
-            setAbsences(Array.isArray(a)?a:[]);
+            const [n,j,c,a] = await Promise.all([api.get('getNotices'),api.get('getJournals'),api.get('getCounsels'),api.get('getAbsences')]);
+            setNotices(Array.isArray(n)?n:[]); setJournals(Array.isArray(j)?j:[]);
+            setCounsels(Array.isArray(c)?c:[]); setAbsences(Array.isArray(a)?a:[]);
         } catch(e){}
         finally { setLoading(false); }
     }, []);
     useEffect(() => { loadAll(); }, []);
 
     const userWithClasses = { ...user, classes: myClasses.join(',') };
-
     const navItems = [
         {id:'notice',  label:'공지사항',   icon:'bell',   active:'active-blue'},
         {id:'journal', label:'근무 일지',   icon:'pencil', active:'active-green'},
@@ -618,9 +578,7 @@ const TeacherApp = ({ user, onLogout }) => {
     return (
         <div className="app-shell">
             <div className={`sidebar-overlay ${sidebarOpen?'open':''}`} onClick={()=>setSidebar(false)}/>
-            <button className="mobile-menu-btn" onClick={()=>setSidebar(v=>!v)}>
-                <Icon name={sidebarOpen?'x':'menu'} size={22}/>
-            </button>
+            <button className="mobile-menu-btn no-print" onClick={()=>setSidebar(v=>!v)}><Icon name={sidebarOpen?'x':'menu'} size={22}/></button>
             <aside className={`sidebar ${sidebarOpen?'open':''}`}>
                 <div className="sidebar-logo">
                     <div className="logo-icon"><Icon name="sparkles" size={22}/></div>
@@ -628,8 +586,7 @@ const TeacherApp = ({ user, onLogout }) => {
                 </div>
                 <nav className="nav">
                     {navItems.map(btn => (
-                        <button key={btn.id} className={`nav-btn ${view===btn.id?btn.active:''}`}
-                            onClick={()=>{setView(btn.id);setSidebar(false);}}>
+                        <button key={btn.id} className={`nav-btn ${view===btn.id?btn.active:''}`} onClick={()=>{setView(btn.id);setSidebar(false);}}>
                             <Icon name={btn.icon} size={17}/> {btn.label}
                         </button>
                     ))}
@@ -637,13 +594,9 @@ const TeacherApp = ({ user, onLogout }) => {
                 <div className="sidebar-footer">
                     <div className="user-info-card">
                         <div className="user-avatar">{user.name[0]}</div>
-                        <div>
-                            <div style={{fontSize:13,fontWeight:900,color:'#1e293b'}}>{user.name} 강사</div>
-                            <div style={{fontSize:11,fontWeight:700,color:'#94a3b8'}}>담당 {myClasses.length}개 반</div>
-                        </div>
+                        <div><div style={{fontSize:13,fontWeight:900,color:'#1e293b'}}>{user.name} 강사</div><div style={{fontSize:11,fontWeight:700,color:'#94a3b8'}}>담당 {myClasses.length}개 반</div></div>
                     </div>
-                    <button onClick={()=>setShowClassModal(true)}
-                        style={{display:'flex',alignItems:'center',gap:6,padding:'10px 14px',borderRadius:14,fontSize:12,fontWeight:700,color:'#f97316',width:'100%',background:'#fff7ed'}}>
+                    <button onClick={()=>setShowClassModal(true)} style={{display:'flex',alignItems:'center',gap:6,padding:'10px 14px',borderRadius:14,fontSize:12,fontWeight:700,color:'#f97316',width:'100%',background:'#fff7ed'}}>
                         <Icon name="pencil" size={14}/> 담당반 변경
                     </button>
                     <button onClick={onLogout} style={{display:'flex',alignItems:'center',gap:6,padding:'10px 14px',borderRadius:14,fontSize:12,fontWeight:700,color:'#94a3b8',width:'100%'}}>
@@ -653,8 +606,7 @@ const TeacherApp = ({ user, onLogout }) => {
             </aside>
             <main className="main">
                 <div className="main-header">
-                    <div>
-                        <div className="header-eyebrow">Teacher Portal</div>
+                    <div><div className="header-eyebrow">Teacher Portal</div>
                         <div className="header-title">
                             {view==='notice'?'공지사항':view==='journal'?'근무 일지':view==='absence'?'결석 사유':'학부모 상담'}
                         </div>
@@ -671,35 +623,23 @@ const TeacherApp = ({ user, onLogout }) => {
                 )}
             </main>
             {toast && <Toast {...toast} onDone={()=>setToast(null)}/>}
-
             {showClassModal && (
-                <div className="modal-overlay" onClick={e=>e.target===e.currentTarget&&setShowClassModal(false)}>
+                <div className="modal-overlay no-print" onClick={e=>e.target===e.currentTarget&&setShowClassModal(false)}>
                     <div className="modal-box" style={{maxWidth:480}}>
                         <div className="modal-title">담당반 변경</div>
-                        <div style={{fontSize:13,fontWeight:700,color:'#64748b',marginBottom:4}}>
-                            현재 선택: <span style={{color:'#f97316',fontWeight:900}}>{myClasses.length}개 반</span>
-                        </div>
                         <div style={{display:'flex',flexDirection:'column',gap:10,maxHeight:400,overflowY:'auto'}}>
                             {GRADE_GROUPS.map(g=>(
                                 <div key={g.grade}>
                                     <div style={{fontSize:11,fontWeight:900,color:'#64748b',marginBottom:6,padding:'3px 8px',background:'#f1f5f9',borderRadius:8,display:'inline-block'}}>{g.grade}</div>
                                     <div style={{display:'grid',gridTemplateColumns:'repeat(2,1fr)',gap:6}}>
                                         {g.classes.map(c=>{
-                                            const checked  = myClasses.includes(c.id);
-                                            const dayPart  = c.id.includes('-mw-')?'월목':'화금';
-                                            const typePart = c.id.endsWith('-s')?'수반':'학반';
+                                            const checked = myClasses.includes(c.id);
                                             return (
-                                                <button key={c.id} onClick={()=>toggleClass(c.id)} style={{
-                                                    display:'flex',alignItems:'center',gap:8,padding:'10px 12px',borderRadius:12,
-                                                    border:`2px solid ${checked?'#f97316':'#f1f5f9'}`,
-                                                    background:checked?'#fff7ed':'#f8fafc',
-                                                    color:checked?'#f97316':'#64748b',
-                                                    fontSize:12,fontWeight:900,transition:'all .15s',
-                                                }}>
+                                                <button key={c.id} onClick={()=>toggleClass(c.id)} style={{display:'flex',alignItems:'center',gap:8,padding:'10px 12px',borderRadius:12,border:`2px solid ${checked?'#f97316':'#f1f5f9'}`,background:checked?'#fff7ed':'#f8fafc',color:checked?'#f97316':'#64748b',fontSize:12,fontWeight:900,transition:'all .15s'}}>
                                                     <div style={{width:16,height:16,borderRadius:4,border:`2px solid ${checked?'#f97316':'#cbd5e1'}`,background:checked?'#f97316':'transparent',flexShrink:0,display:'flex',alignItems:'center',justifyContent:'center'}}>
                                                         {checked&&<Icon name="check" size={10}/>}
                                                     </div>
-                                                    {dayPart} {typePart}
+                                                    {c.id.includes('-mw-')?'월목':'화금'} {c.id.endsWith('-s')?'수반':'학반'}
                                                 </button>
                                             );
                                         })}
@@ -709,9 +649,7 @@ const TeacherApp = ({ user, onLogout }) => {
                         </div>
                         <div className="modal-btns">
                             <button className="btn-cancel" onClick={()=>setShowClassModal(false)}>취소</button>
-                            <button className="btn-confirm" style={{background:'#f97316'}} onClick={handleClassSave} disabled={savingClass}>
-                                {savingClass?'저장 중...':'변경 저장'}
-                            </button>
+                            <button className="btn-confirm" style={{background:'#f97316'}} onClick={handleClassSave} disabled={savingClass}>{savingClass?'저장 중...':'변경 저장'}</button>
                         </div>
                     </div>
                 </div>
@@ -720,46 +658,28 @@ const TeacherApp = ({ user, onLogout }) => {
     );
 };
 
-// ━━━ 관리자 화면 ━━━
+/* ━━━ 관리자 앱 ━━━ */
 const AdminApp = ({ user, onLogout }) => {
-    const [view,      setView]     = useState('dashboard');
-    const [notices,   setNotices]  = useState([]);
-    const [journals,  setJournals] = useState([]);
-    const [counsels,  setCounsels] = useState([]);
-    const [absences,  setAbsences] = useState([]);
-    const [teachers,  setTeachers] = useState([]);
-    const [admins,    setAdmins]   = useState([]);
-    const [loading,   setLoading]  = useState(true);
-    const [toast,     setToast]    = useState(null);
-    const [sidebarOpen,setSidebar] = useState(false);
-    const showToast = (m,t='success') => setToast({message:m,type:t});
-
+    const [view, setView] = useState('dashboard');
+    const [notices, setNotices] = useState([]);
+    const [journals, setJournals] = useState([]);
+    const [counsels, setCounsels] = useState([]);
+    const [absences, setAbsences] = useState([]);
+    const [teachers, setTeachers] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [toast, setToast] = useState(null);
+    const [sidebarOpen, setSidebar] = useState(false);
     const [apiError, setApiError] = useState(null);
-
-    // ✅ today를 매번 현재 KST 날짜로 계산
+    const showToast = (m,t='success') => setToast({message:m,type:t});
     const today = getKSTDate();
 
     const loadAll = useCallback(async () => {
         setLoading(true); setApiError(null);
         try {
-            const [n,j,c,a,t] = await Promise.all([
-                api.get('getNotices'),
-                api.get('getJournals'),
-                api.get('getCounsels'),
-                api.get('getAbsences'),
-                api.get('getTeachers'),
-            ]);
-            setNotices(Array.isArray(n)?n:[]);
-            setJournals(Array.isArray(j)?j:[]);
-            setCounsels(Array.isArray(c)?c:[]);
-            setAbsences(Array.isArray(a)?a:[]);
+            const [n,j,c,a,t] = await Promise.all([api.get('getNotices'),api.get('getJournals'),api.get('getCounsels'),api.get('getAbsences'),api.get('getTeachers')]);
+            setNotices(Array.isArray(n)?n:[]); setJournals(Array.isArray(j)?j:[]);
+            setCounsels(Array.isArray(c)?c:[]); setAbsences(Array.isArray(a)?a:[]);
             setTeachers(Array.isArray(t)?t:[]);
-            setAdmins([
-                {name:'김남탁',  isFirst: localStorage.getItem('admin_first_김남탁') !== 'done'},
-                {name:'김유식',  isFirst: localStorage.getItem('admin_first_김유식') !== 'done'},
-                {name:'사공은경',isFirst: localStorage.getItem('admin_first_사공은경') !== 'done'},
-                {name:'김윤희',  isFirst: localStorage.getItem('admin_first_김윤희') !== 'done'},
-            ]);
         } catch(e){ setApiError(e.message); }
         finally { setLoading(false); }
     }, []);
@@ -777,9 +697,7 @@ const AdminApp = ({ user, onLogout }) => {
     return (
         <div className="app-shell">
             <div className={`sidebar-overlay ${sidebarOpen?'open':''}`} onClick={()=>setSidebar(false)}/>
-            <button className="mobile-menu-btn" onClick={()=>setSidebar(v=>!v)}>
-                <Icon name={sidebarOpen?'x':'menu'} size={22}/>
-            </button>
+            <button className="mobile-menu-btn no-print" onClick={()=>setSidebar(v=>!v)}><Icon name={sidebarOpen?'x':'menu'} size={22}/></button>
             <aside className={`sidebar ${sidebarOpen?'open':''}`}>
                 <div className="sidebar-logo">
                     <div className="logo-icon"><Icon name="sparkles" size={22}/></div>
@@ -787,19 +705,15 @@ const AdminApp = ({ user, onLogout }) => {
                 </div>
                 <nav className="nav">
                     {navItems.map(btn => (
-                        <button key={btn.id} className={`nav-btn ${view===btn.id?btn.active:''}`}
-                            onClick={()=>{setView(btn.id);setSidebar(false);}}>
+                        <button key={btn.id} className={`nav-btn ${view===btn.id?btn.active:''}`} onClick={()=>{setView(btn.id);setSidebar(false);}}>
                             <Icon name={btn.icon} size={17}/> {btn.label}
                         </button>
                     ))}
                 </nav>
                 <div className="sidebar-footer">
                     <div className="user-info-card">
-                        <div className="user-avatar admin">{user.isSuper ? '관' : user.name[0]}</div>
-                        <div>
-                            <div style={{fontSize:13,fontWeight:900,color:'#1e293b'}}>{user.name} 관리자</div>
-                            <div style={{fontSize:11,fontWeight:700,color:'#94a3b8'}}>{user.isSuper?'최고 관리자':'관리자'}</div>
-                        </div>
+                        <div className="user-avatar admin">{user.isSuper?'관':user.name[0]}</div>
+                        <div><div style={{fontSize:13,fontWeight:900,color:'#1e293b'}}>{user.name} 관리자</div><div style={{fontSize:11,fontWeight:700,color:'#94a3b8'}}>{user.isSuper?'최고 관리자':'관리자'}</div></div>
                     </div>
                     <button onClick={onLogout} style={{display:'flex',alignItems:'center',gap:6,padding:'10px 14px',borderRadius:14,fontSize:12,fontWeight:700,color:'#94a3b8',width:'100%'}}>
                         <Icon name="logout" size={14}/> 로그아웃
@@ -808,8 +722,7 @@ const AdminApp = ({ user, onLogout }) => {
             </aside>
             <main className="main">
                 <div className="main-header">
-                    <div>
-                        <div className="header-eyebrow">Admin Panel</div>
+                    <div><div className="header-eyebrow">Admin Panel</div>
                         <div className="header-title">
                             {view==='dashboard'?'전체 현황':view==='teachers'?'강사 계정 관리':view==='notice'?'공지사항 관리':view==='journal'?'근무 일지 전체':view==='absence'?'결석 사유 전체':'상담 기록 전체'}
                         </div>
@@ -825,11 +738,11 @@ const AdminApp = ({ user, onLogout }) => {
                 ) : (
                     <>
                         {view==='dashboard' && <AdminDashboard journals={journals} counsels={counsels} absences={absences} notices={notices} teachers={teachers} today={today}/>}
-                        {view==='teachers'  && <TeacherMgr teachers={teachers} admins={admins} showToast={showToast} reload={loadAll}/>}
+                        {view==='teachers'  && <TeacherMgr teachers={teachers} showToast={showToast} reload={loadAll}/>}
                         {view==='notice'    && <NoticeView notices={notices} isAdmin={true} showToast={showToast} reload={loadAll}/>}
-                        {view==='journal'   && <JournalAllView journals={journals}/>}
-                        {view==='absence'   && <AbsenceAllView absences={absences}/>}
-                        {view==='counsel'   && <CounselAllView counsels={counsels}/>}
+                        {view==='journal'   && <JournalAllView journals={journals} teachers={teachers}/>}
+                        {view==='absence'   && <AbsenceAllView absences={absences} teachers={teachers}/>}
+                        {view==='counsel'   && <CounselAllView counsels={counsels} teachers={teachers}/>}
                     </>
                 )}
             </main>
@@ -838,58 +751,35 @@ const AdminApp = ({ user, onLogout }) => {
     );
 };
 
-// ━━━ 공지사항 뷰 ━━━
+/* ━━━ 공지사항 뷰 ━━━ */
 const NoticeView = ({ notices: initialNotices, isAdmin, showToast, reload }) => {
-    const [notices,    setNotices]   = useState(initialNotices);
-    const [showModal,  setShowModal] = useState(false);
-    const [form,       setForm]      = useState({ title:'', content:'' });
-    const [saving,     setSaving]    = useState(false);
-    const [editTarget, setEditTarget]= useState(null);
-
+    const [notices, setNotices] = useState(initialNotices);
+    const [showModal, setShowModal] = useState(false);
+    const [form, setForm] = useState({ title:'', content:'' });
+    const [saving, setSaving] = useState(false);
+    const [editTarget, setEditTarget] = useState(null);
     useEffect(() => { setNotices(initialNotices); }, [initialNotices]);
-
-    // ✅ CreatedAt 기준 정렬
     const sorted = sortByCreatedAt(notices);
 
     const handleSave = async () => {
         if (!form.title.trim()||!form.content.trim()) return;
         setSaving(true);
-        const tempId = 'temp-' + Date.now();
-        const newNotice = { ID:tempId, Title:form.title, Content:form.content, CreatedAt:new Date().toISOString() };
-
+        const tempId = 'temp-'+Date.now();
+        const newN = { ID:tempId, Title:form.title, Content:form.content, CreatedAt:new Date().toISOString() };
         if (editTarget) {
-            setNotices(prev => prev.map(n => n.ID===editTarget ? newNotice : n));
+            setNotices(prev=>prev.map(n=>n.ID===editTarget?newN:n));
             setForm({title:'',content:''}); setShowModal(false); setEditTarget(null);
             showToast('공지사항이 수정되었습니다');
-            try {
-                await api.post({ action:'deleteNotice', id:editTarget });
-                await api.post({ action:'addNotice', ...form });
-                reload();
-            } catch(e){ showToast('저장 실패','error'); reload(); }
+            try { await api.post({action:'deleteNotice',id:editTarget}); await api.post({action:'addNotice',...form}); reload(); }
+            catch(e){ showToast('저장 실패','error'); reload(); }
         } else {
-            setNotices(prev => [newNotice, ...prev]);
+            setNotices(prev=>[newN,...prev]);
             setForm({title:'',content:''}); setShowModal(false);
             showToast('공지사항이 등록되었습니다');
-            try {
-                await api.post({ action:'addNotice', ...form });
-                reload();
-            } catch(e){ showToast('저장 실패','error'); reload(); }
+            try { await api.post({action:'addNotice',...form}); reload(); }
+            catch(e){ showToast('저장 실패','error'); reload(); }
         }
         setSaving(false);
-    };
-
-    const handleEdit = (n) => {
-        setForm({title:n.Title, content:n.Content});
-        setEditTarget(n.ID);
-        setShowModal(true);
-    };
-
-    const handleDelete = async (id) => {
-        if (!confirm('삭제하시겠습니까?')) return;
-        setNotices(prev => prev.filter(n => n.ID !== id));
-        showToast('삭제되었습니다');
-        try { await api.post({action:'deleteNotice',id}); reload(); }
-        catch(e){ showToast('삭제 실패','error'); reload(); }
     };
 
     return (
@@ -902,40 +792,29 @@ const NoticeView = ({ notices: initialNotices, isAdmin, showToast, reload }) => 
                 </div>
             )}
             {sorted.length===0 ? <div className="empty-box"><p style={{fontWeight:700}}>공지사항이 없습니다</p></div> :
-                sorted.map(n => (
-                    <div key={n.ID} className="notice-item" style={{position:'relative',paddingRight: isAdmin?60:20}}>
+                sorted.map(n=>(
+                    <div key={n.ID} className="notice-item" style={{position:'relative',paddingRight:isAdmin?60:20}}>
                         <div className="notice-title">{n.Title}</div>
                         <div className="notice-body" style={{whiteSpace:'pre-wrap'}}>{n.Content}</div>
-                        <div className="notice-date">{n.CreatedAt ? formatDateTime(n.CreatedAt) : ''}</div>
+                        <div className="notice-date">{n.CreatedAt?formatDateTime(n.CreatedAt):''}</div>
                         {isAdmin && (
-                            <div style={{position:'absolute',top:12,right:12,display:'flex',gap:4}}>
-                                <button onClick={()=>handleEdit(n)} style={{color:'#94a3b8',padding:4}} title="수정">
-                                    <Icon name="pencil" size={14}/>
-                                </button>
-                                <button onClick={()=>handleDelete(n.ID)} style={{color:'#cbd5e1',padding:4}} title="삭제">
-                                    <Icon name="trash" size={14}/>
-                                </button>
+                            <div style={{position:'absolute',top:12,right:12,display:'flex',gap:4}} className="no-print">
+                                <button onClick={()=>{setForm({title:n.Title,content:n.Content});setEditTarget(n.ID);setShowModal(true);}} style={{color:'#94a3b8',padding:4}}><Icon name="pencil" size={14}/></button>
+                                <button onClick={async()=>{if(!confirm('삭제?'))return;setNotices(prev=>prev.filter(x=>x.ID!==n.ID));showToast('삭제됨');try{await api.post({action:'deleteNotice',id:n.ID});reload();}catch{showToast('실패','error');}}} style={{color:'#cbd5e1',padding:4}}><Icon name="trash" size={14}/></button>
                             </div>
                         )}
                     </div>
                 ))
             }
             {showModal && (
-                <div className="modal-overlay" onClick={e=>e.target===e.currentTarget&&(setShowModal(false),setEditTarget(null))}>
+                <div className="modal-overlay no-print" onClick={e=>e.target===e.currentTarget&&(setShowModal(false),setEditTarget(null))}>
                     <div className="modal-box">
                         <div className="modal-title">{editTarget?'공지사항 수정':'공지사항 작성'}</div>
                         <div><div className="form-label">제목</div><input className="form-input" value={form.title} onChange={e=>setForm(f=>({...f,title:e.target.value}))} placeholder="공지 제목"/></div>
-                        <div><div className="form-label">내용</div>
-                            <textarea className="form-textarea" value={form.content}
-                                onChange={e=>setForm(f=>({...f,content:e.target.value}))}
-                                placeholder="공지 내용을 입력해 주세요&#10;Enter 키로 줄바꿈 가능합니다"
-                                style={{minHeight:140}}/>
-                        </div>
+                        <div><div className="form-label">내용</div><textarea className="form-textarea" value={form.content} onChange={e=>setForm(f=>({...f,content:e.target.value}))} placeholder="공지 내용" style={{minHeight:140}}/></div>
                         <div className="modal-btns">
                             <button className="btn-cancel" onClick={()=>{setShowModal(false);setEditTarget(null);}}>취소</button>
-                            <button className="btn-confirm btn-blue" style={{background:'#3b82f6'}} onClick={handleSave} disabled={saving}>
-                                {saving?'저장 중...':editTarget?'수정':'등록'}
-                            </button>
+                            <button className="btn-confirm" style={{background:'#3b82f6'}} onClick={handleSave} disabled={saving}>{saving?'저장 중...':editTarget?'수정':'등록'}</button>
                         </div>
                     </div>
                 </div>
@@ -944,96 +823,75 @@ const NoticeView = ({ notices: initialNotices, isAdmin, showToast, reload }) => 
     );
 };
 
-// ━━━ 근무 일지 (강사) ━━━
+/* ━━━ 근무 일지 (강사) — 날짜필터 + 인쇄 ━━━ */
 const JournalView = ({ journals: initialJournals, user, today, showToast, reload }) => {
-    const [journals,   setJournals]  = useState(initialJournals);
-    const [showModal,  setShowModal] = useState(false);
-    const [content,    setContent]   = useState('');
-    const [selDate,    setSelDate]   = useState(today);
-    const [saving,     setSaving]    = useState(false);
-    const [editTarget, setEditTarget]= useState(null);
-
+    const [journals, setJournals] = useState(initialJournals);
+    const [showModal, setShowModal] = useState(false);
+    const [content, setContent] = useState('');
+    const [selDate, setSelDate] = useState(today);
+    const [saving, setSaving] = useState(false);
+    const [editTarget, setEditTarget] = useState(null);
+    const [dateFrom, setDateFrom] = useState('');
+    const [dateTo,   setDateTo]   = useState('');
     useEffect(() => { setJournals(initialJournals); }, [initialJournals]);
 
-    // ✅ CreatedAt 기준 정렬 (내 일지만)
-    const myJournals = useMemo(() =>
-        sortByCreatedAt(journals.filter(j=>j.TeacherName===user.name)),
-    [journals, user]);
+    const myJournals = useMemo(() => sortByCreatedAt(journals.filter(j=>j.TeacherName===user.name)), [journals,user]);
+    const filtered = useMemo(() => myJournals.filter(j => {
+        const d = normalizeDate(j.Date);
+        if (dateFrom && d < dateFrom) return false;
+        if (dateTo   && d > dateTo)   return false;
+        return true;
+    }), [myJournals, dateFrom, dateTo]);
+
+    const handlePrint = () => window.print();
 
     const handleSave = async () => {
-        if (!content.trim()) return;
-        setSaving(true);
+        if (!content.trim()) return; setSaving(true);
         if (editTarget) {
-            setJournals(prev => prev.map(j => j.ID===editTarget ? {...j, Content:content.trim(), Date:selDate} : j));
-            showToast('일지가 수정되었습니다');
-            setContent(''); setSelDate(today); setShowModal(false); setEditTarget(null);
-            try { await api.post({ action:'updateJournal', id:editTarget, date:selDate, content:content.trim() }); reload(); }
+            setJournals(prev=>prev.map(j=>j.ID===editTarget?{...j,Content:content.trim(),Date:selDate}:j));
+            showToast('일지가 수정되었습니다'); setContent(''); setSelDate(today); setShowModal(false); setEditTarget(null);
+            try { await api.post({action:'updateJournal',id:editTarget,date:selDate,content:content.trim()}); reload(); }
             catch(e){ showToast('수정 실패','error'); reload(); }
         } else {
-            const tempId = 'temp-' + Date.now();
-            const newJ = { ID:tempId, Date:selDate, TeacherName:user.name, Content:content.trim(), CreatedAt:new Date().toISOString() };
-            setJournals(prev => [newJ, ...prev]);
-            showToast('일지가 저장되었습니다');
-            setContent(''); setShowModal(false);
-            try { await api.post({ action:'addJournal', date:selDate, teacherName:user.name, content:content.trim() }); reload(); }
+            const newJ = {ID:'temp-'+Date.now(),Date:selDate,TeacherName:user.name,Content:content.trim(),CreatedAt:new Date().toISOString()};
+            setJournals(prev=>[newJ,...prev]); showToast('일지가 저장되었습니다'); setContent(''); setShowModal(false);
+            try { await api.post({action:'addJournal',date:selDate,teacherName:user.name,content:content.trim()}); reload(); }
             catch(e){ showToast('저장 실패','error'); reload(); }
         }
         setSaving(false);
     };
 
-    const handleEdit = (j) => {
-        setContent(j.Content);
-        setSelDate(normalizeDate(j.Date));
-        setEditTarget(j.ID);
-        setShowModal(true);
-    };
-
-    const handleDelete = async (id) => {
-        if (!confirm('이 일지를 삭제하시겠습니까?')) return;
-        const safeId = String(id||'').trim();
-        if (!safeId) { showToast('삭제 실패: ID 없음','error'); return; }
-        setJournals(prev => prev.filter(j => j.ID !== id));
-        showToast('삭제되었습니다');
-        try { await api.post({ action:'deleteJournal', id:safeId }); reload(); }
-        catch(e){ showToast('삭제 실패','error'); reload(); }
-    };
-
     return (
         <div className="fade-in" style={{display:'flex',flexDirection:'column',gap:12,paddingBottom:40}}>
-            <div style={{display:'flex',justifyContent:'flex-end'}}>
+            <PrintHeader title={`근무 일지 — ${user.name} 강사`} dateFrom={dateFrom} dateTo={dateTo}/>
+            <div className="no-print" style={{display:'flex',justifyContent:'flex-end'}}>
                 <button className="btn-primary btn-green" onClick={()=>{setContent('');setSelDate(today);setEditTarget(null);setShowModal(true);}}>
                     <Icon name="pencil" size={15}/> 일지 작성
                 </button>
             </div>
-            {myJournals.length===0 ? <div className="empty-box"><p style={{fontWeight:700}}>작성한 일지가 없습니다</p></div> :
-                myJournals.map(j=>(
+            <PrintFilterBar dateFrom={dateFrom} dateTo={dateTo} onDateFrom={setDateFrom} onDateTo={setDateTo}
+                count={filtered.length} total={myJournals.length} onPrint={handlePrint}/>
+            {filtered.length===0 ? <div className="empty-box"><p style={{fontWeight:700}}>작성한 일지가 없습니다</p></div> :
+                filtered.map(j=>(
                     <div key={j.ID} className="list-item" style={{position:'relative',paddingRight:72}}>
-                        <div className="list-meta">
-                            <span className="badge badge-done">{formatDate(j.Date)}</span>
-                            <span>{j.TeacherName}</span>
-                        </div>
+                        <div className="list-meta"><span className="badge badge-done">{formatDate(j.Date)}</span><span>{j.TeacherName}</span></div>
                         <div className="list-content">{j.Content}</div>
-                        <div style={{position:'absolute',top:12,right:12,display:'flex',gap:4}}>
-                            <button onClick={()=>handleEdit(j)} style={{color:'#94a3b8',padding:6,borderRadius:8,background:'#f8fafc'}} title="수정">
-                                <Icon name="pencil" size={13}/>
-                            </button>
-                            <button onClick={()=>handleDelete(j.ID)} style={{color:'#cbd5e1',padding:6,borderRadius:8,background:'#f8fafc'}} title="삭제">
-                                <Icon name="trash" size={13}/>
-                            </button>
+                        <div style={{position:'absolute',top:12,right:12,display:'flex',gap:4}} className="no-print">
+                            <button onClick={()=>{setContent(j.Content);setSelDate(normalizeDate(j.Date));setEditTarget(j.ID);setShowModal(true);}} style={{color:'#94a3b8',padding:6,borderRadius:8,background:'#f8fafc'}}><Icon name="pencil" size={13}/></button>
+                            <button onClick={async()=>{if(!confirm('삭제?'))return;setJournals(prev=>prev.filter(x=>x.ID!==j.ID));showToast('삭제됨');try{await api.post({action:'deleteJournal',id:String(j.ID)});reload();}catch{showToast('실패','error');}}} style={{color:'#cbd5e1',padding:6,borderRadius:8,background:'#f8fafc'}}><Icon name="trash" size={13}/></button>
                         </div>
                     </div>
                 ))
             }
             {showModal && (
-                <div className="modal-overlay" onClick={e=>e.target===e.currentTarget&&(setShowModal(false),setEditTarget(null))}>
-                    <div className="modal-box" >
+                <div className="modal-overlay no-print" onClick={e=>e.target===e.currentTarget&&(setShowModal(false),setEditTarget(null))}>
+                    <div className="modal-box">
+                        <div className="modal-title">{editTarget?'일지 수정':'근무 일지 작성'}</div>
                         <div><div className="form-label">날짜</div><input className="form-input" type="date" value={selDate} onChange={e=>setSelDate(e.target.value)}/></div>
-                        <div><div className="form-label">내용</div><textarea className="form-textarea" value={content} onChange={e=>setContent(e.target.value)} placeholder="오늘 특이사항, 수업 내용 등을 자유롭게 작성해 주세요" style={{minHeight:120}}/></div>
+                        <div><div className="form-label">내용</div><textarea className="form-textarea" value={content} onChange={e=>setContent(e.target.value)} placeholder="오늘 특이사항, 수업 내용 등" style={{minHeight:120}}/></div>
                         <div className="modal-btns">
                             <button className="btn-cancel" onClick={()=>{setShowModal(false);setEditTarget(null);}}>취소</button>
-                            <button className="btn-confirm" style={{background:'#10b981'}} onClick={handleSave} disabled={saving}>
-                                {saving?'저장 중...':editTarget?'수정':'저장'}
-                            </button>
+                            <button className="btn-confirm" style={{background:'#10b981'}} onClick={handleSave} disabled={saving}>{saving?'저장 중...':editTarget?'수정':'저장'}</button>
                         </div>
                     </div>
                 </div>
@@ -1042,100 +900,71 @@ const JournalView = ({ journals: initialJournals, user, today, showToast, reload
     );
 };
 
-// ━━━ 결석 사유 (강사) ━━━
+/* ━━━ 결석 사유 (강사) — 날짜필터 + 인쇄 ━━━ */
 const AbsenceView = ({ absences: initialAbsences, user, today, showToast, reload }) => {
-    const [absences,   setAbsences]  = useState(initialAbsences);
-    const [showModal,  setShowModal] = useState(false);
-    const [form,       setForm]      = useState({ date:today, studentName:'', className:'', reason:'' });
-    const [saving,     setSaving]    = useState(false);
-    const [editTarget, setEditTarget]= useState(null);
-
+    const [absences, setAbsences] = useState(initialAbsences);
+    const [showModal, setShowModal] = useState(false);
+    const [form, setForm] = useState({date:today,studentName:'',className:'',reason:''});
+    const [saving, setSaving] = useState(false);
+    const [editTarget, setEditTarget] = useState(null);
+    const [dateFrom, setDateFrom] = useState('');
+    const [dateTo,   setDateTo]   = useState('');
     useEffect(() => { setAbsences(initialAbsences); }, [initialAbsences]);
 
-    const myClasses = useMemo(() => {
-        if (!user.classes) return [];
-        return user.classes.split(',').map(id=>ALL_CLASSES.find(c=>c.id===id.trim())).filter(Boolean);
-    }, [user]);
+    const myClasses = useMemo(() => (user.classes||'').split(',').map(id=>ALL_CLASSES.find(c=>c.id===id.trim())).filter(Boolean), [user]);
+    const myAbsences = useMemo(() => sortByCreatedAt(absences.filter(a=>a.TeacherName===user.name)), [absences,user]);
+    const filtered = useMemo(() => myAbsences.filter(a => {
+        const d = normalizeDate(a.Date);
+        if (dateFrom && d < dateFrom) return false;
+        if (dateTo   && d > dateTo)   return false;
+        return true;
+    }), [myAbsences, dateFrom, dateTo]);
 
-    // ✅ CreatedAt 기준 정렬 (내 결석만)
-    const myAbsences = useMemo(() =>
-        sortByCreatedAt(absences.filter(a=>a.TeacherName===user.name)),
-    [absences, user]);
-
+    const handlePrint = () => window.print();
     const handleSave = async () => {
-        if (!form.studentName.trim()||!form.reason.trim()) return;
-        setSaving(true);
+        if (!form.studentName.trim()||!form.reason.trim()) return; setSaving(true);
         if (editTarget) {
-            setAbsences(prev => prev.map(a => a.ID===editTarget ? {...a, ...form, StudentName:form.studentName, ClassName:form.className, Reason:form.reason, Date:form.date} : a));
-            showToast('결석 사유가 수정되었습니다');
-            setForm({date:today,studentName:'',className:'',reason:''}); setShowModal(false); setEditTarget(null);
-            try { await api.post({ action:'updateAbsence', id:editTarget, ...form }); reload(); }
-            catch(e){ showToast('수정 실패','error'); reload(); }
+            setAbsences(prev=>prev.map(a=>a.ID===editTarget?{...a,...form,StudentName:form.studentName,ClassName:form.className,Reason:form.reason,Date:form.date}:a));
+            showToast('수정됨'); setForm({date:today,studentName:'',className:'',reason:''}); setShowModal(false); setEditTarget(null);
+            try{await api.post({action:'updateAbsence',id:editTarget,...form});reload();}catch(e){showToast('실패','error');reload();}
         } else {
-            const tempId = 'temp-' + Date.now();
-            const newA = { ID:tempId, Date:form.date, StudentName:form.studentName, ClassName:form.className, Reason:form.reason, TeacherName:user.name, CreatedAt:new Date().toISOString() };
-            setAbsences(prev => [newA, ...prev]);
-            showToast('결석 사유가 저장되었습니다');
-            setForm({date:today,studentName:'',className:'',reason:''}); setShowModal(false);
-            try { await api.post({ action:'addAbsence', ...form, teacherName:user.name }); reload(); }
-            catch(e){ showToast('저장 실패','error'); reload(); }
+            setAbsences(prev=>[{ID:'temp-'+Date.now(),Date:form.date,StudentName:form.studentName,ClassName:form.className,Reason:form.reason,TeacherName:user.name,CreatedAt:new Date().toISOString()},...prev]);
+            showToast('저장됨'); setForm({date:today,studentName:'',className:'',reason:''}); setShowModal(false);
+            try{await api.post({action:'addAbsence',...form,teacherName:user.name});reload();}catch(e){showToast('실패','error');reload();}
         }
         setSaving(false);
     };
 
-    const handleEdit = (a) => {
-        setForm({ date:normalizeDate(a.Date), studentName:a.StudentName, className:a.ClassName||'', reason:a.Reason });
-        setEditTarget(a.ID);
-        setShowModal(true);
-    };
-
     return (
         <div className="fade-in" style={{display:'flex',flexDirection:'column',gap:12,paddingBottom:40}}>
-            <div style={{display:'flex',justifyContent:'flex-end'}}>
+            <PrintHeader title={`결석 사유 — ${user.name} 강사`} dateFrom={dateFrom} dateTo={dateTo}/>
+            <div className="no-print" style={{display:'flex',justifyContent:'flex-end'}}>
                 <button className="btn-primary btn-red" onClick={()=>{setForm({date:today,studentName:'',className:'',reason:''});setEditTarget(null);setShowModal(true);}}>
                     <Icon name="plus" size={15}/> 결석 사유 입력
                 </button>
             </div>
-            {myAbsences.length===0 ? <div className="empty-box"><p style={{fontWeight:700}}>입력한 결석 사유가 없습니다</p></div> :
-                myAbsences.map(a=>(
+            <PrintFilterBar dateFrom={dateFrom} dateTo={dateTo} onDateFrom={setDateFrom} onDateTo={setDateTo}
+                count={filtered.length} total={myAbsences.length} onPrint={handlePrint}/>
+            {filtered.length===0 ? <div className="empty-box"><p style={{fontWeight:700}}>입력한 결석 사유가 없습니다</p></div> :
+                filtered.map(a=>(
                     <div key={a.ID} className="list-item" style={{position:'relative',paddingRight:72}}>
-                        <div className="list-meta">
-                            <span className="badge badge-new">{formatDate(a.Date)}</span>
-                            <span style={{fontWeight:900,color:'#1e293b'}}>{a.StudentName}</span>
-                            {a.ClassName && <span style={{color:'#94a3b8'}}>{a.ClassName}</span>}
-                        </div>
+                        <div className="list-meta"><span className="badge badge-new">{formatDate(a.Date)}</span><span style={{fontWeight:900,color:'#1e293b'}}>{a.StudentName}</span>{a.ClassName&&<span style={{color:'#94a3b8'}}>{a.ClassName}</span>}</div>
                         <div className="list-content">{a.Reason}</div>
                         <div style={{fontSize:11,fontWeight:700,color:'#cbd5e1'}}>{a.TeacherName}</div>
-                        <div style={{position:'absolute',top:12,right:12,display:'flex',gap:4}}>
-                            <button onClick={()=>handleEdit(a)} style={{color:'#94a3b8',padding:6,borderRadius:8,background:'#f8fafc'}} title="수정">
-                                <Icon name="pencil" size={13}/>
-                            </button>
-                            <button onClick={async()=>{
-                                if(!confirm('이 결석 사유를 삭제하시겠습니까?')) return;
-                                const safeId = String(a.ID||'').trim();
-                                if (!safeId) { showToast('삭제 실패: ID 없음','error'); return; }
-                                setAbsences(prev => prev.filter(x => x.ID !== a.ID));
-                                showToast('삭제되었습니다');
-                                try { await api.post({action:'deleteAbsence',id:safeId}); reload(); }
-                                catch(e){ showToast('삭제 실패','error'); reload(); }
-                            }} style={{color:'#cbd5e1',padding:6,borderRadius:8,background:'#f8fafc'}} title="삭제">
-                                <Icon name="trash" size={13}/>
-                            </button>
+                        <div style={{position:'absolute',top:12,right:12,display:'flex',gap:4}} className="no-print">
+                            <button onClick={()=>{setForm({date:normalizeDate(a.Date),studentName:a.StudentName,className:a.ClassName||'',reason:a.Reason});setEditTarget(a.ID);setShowModal(true);}} style={{color:'#94a3b8',padding:6,borderRadius:8,background:'#f8fafc'}}><Icon name="pencil" size={13}/></button>
+                            <button onClick={async()=>{if(!confirm('삭제?'))return;setAbsences(prev=>prev.filter(x=>x.ID!==a.ID));showToast('삭제됨');try{await api.post({action:'deleteAbsence',id:String(a.ID)});reload();}catch{showToast('실패','error');}}} style={{color:'#cbd5e1',padding:6,borderRadius:8,background:'#f8fafc'}}><Icon name="trash" size={13}/></button>
                         </div>
                     </div>
                 ))
             }
             {showModal && (
-                <div className="modal-overlay" onClick={e=>e.target===e.currentTarget&&(setShowModal(false),setEditTarget(null))}>
+                <div className="modal-overlay no-print" onClick={e=>e.target===e.currentTarget&&(setShowModal(false),setEditTarget(null))}>
                     <div className="modal-box">
                         <div className="modal-title">{editTarget?'결석 사유 수정':'결석 사유 입력'}</div>
-                        <div><div className="form-label">날짜</div>
-                            <input className="form-input" type="date" value={form.date} onChange={e=>setForm(f=>({...f,date:e.target.value}))}/>
-                        </div>
+                        <div><div className="form-label">날짜</div><input className="form-input" type="date" value={form.date} onChange={e=>setForm(f=>({...f,date:e.target.value}))}/></div>
                         <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
-                            <div><div className="form-label">학생 이름</div>
-                                <input className="form-input" value={form.studentName} onChange={e=>setForm(f=>({...f,studentName:e.target.value}))} placeholder="학생 이름"/>
-                            </div>
+                            <div><div className="form-label">학생 이름</div><input className="form-input" value={form.studentName} onChange={e=>setForm(f=>({...f,studentName:e.target.value}))} placeholder="학생 이름"/></div>
                             <div><div className="form-label">담당 반</div>
                                 <select className="form-select" value={form.className} onChange={e=>setForm(f=>({...f,className:e.target.value}))}>
                                     <option value="">반 선택...</option>
@@ -1143,9 +972,7 @@ const AbsenceView = ({ absences: initialAbsences, user, today, showToast, reload
                                 </select>
                             </div>
                         </div>
-                        <div><div className="form-label">결석 사유</div>
-                            <textarea className="form-textarea" value={form.reason} onChange={e=>setForm(f=>({...f,reason:e.target.value}))} placeholder="결석 사유를 입력해 주세요" style={{minHeight:130}}/>
-                        </div>
+                        <div><div className="form-label">결석 사유</div><textarea className="form-textarea" value={form.reason} onChange={e=>setForm(f=>({...f,reason:e.target.value}))} placeholder="결석 사유" style={{minHeight:130}}/></div>
                         <div className="modal-btns">
                             <button className="btn-cancel" onClick={()=>{setShowModal(false);setEditTarget(null);}}>취소</button>
                             <button className="btn-confirm" style={{background:'#ef4444'}} onClick={handleSave} disabled={saving}>{saving?'저장 중...':editTarget?'수정':'저장'}</button>
@@ -1157,101 +984,76 @@ const AbsenceView = ({ absences: initialAbsences, user, today, showToast, reload
     );
 };
 
-// ━━━ 학부모 상담 (강사) ━━━
+/* ━━━ 상담 기록 (강사) — 날짜필터 + 인쇄 ━━━ */
 const CounselView = ({ counsels: initialCounsels, user, today, showToast, reload }) => {
-    const [counsels,   setCounsels]  = useState(initialCounsels);
-    const [showModal,  setShowModal] = useState(false);
-    const [form,       setForm]      = useState({ date:today, studentName:'', parentName:'', content:'' });
-    const [saving,     setSaving]    = useState(false);
-    const [editTarget, setEditTarget]= useState(null);
-
+    const [counsels, setCounsels] = useState(initialCounsels);
+    const [showModal, setShowModal] = useState(false);
+    const [form, setForm] = useState({date:today,studentName:'',parentName:'',content:''});
+    const [saving, setSaving] = useState(false);
+    const [editTarget, setEditTarget] = useState(null);
+    const [dateFrom, setDateFrom] = useState('');
+    const [dateTo,   setDateTo]   = useState('');
     useEffect(() => { setCounsels(initialCounsels); }, [initialCounsels]);
 
-    // ✅ CreatedAt 기준 정렬 (내 상담만)
-    const myCounsels = useMemo(() =>
-        sortByCreatedAt(counsels.filter(c=>c.TeacherName===user.name)),
-    [counsels, user]);
+    const myCounsels = useMemo(() => sortByCreatedAt(counsels.filter(c=>c.TeacherName===user.name)), [counsels,user]);
+    const filtered = useMemo(() => myCounsels.filter(c => {
+        const d = normalizeDate(c.Date);
+        if (dateFrom && d < dateFrom) return false;
+        if (dateTo   && d > dateTo)   return false;
+        return true;
+    }), [myCounsels, dateFrom, dateTo]);
 
+    const handlePrint = () => window.print();
     const handleSave = async () => {
-        if (!form.studentName.trim()||!form.content.trim()) return;
-        setSaving(true);
+        if (!form.studentName.trim()||!form.content.trim()) return; setSaving(true);
         if (editTarget) {
-            setCounsels(prev => prev.map(c => c.ID===editTarget ? {...c, Date:form.date, StudentName:form.studentName, ParentName:form.parentName||'', Content:form.content} : c));
-            showToast('상담 기록이 수정되었습니다');
-            setForm({date:today,studentName:'',parentName:'',content:''}); setShowModal(false); setEditTarget(null);
-            try { await api.post({ action:'updateCounsel', id:editTarget, ...form }); reload(); }
-            catch(e){ showToast('수정 실패','error'); reload(); }
+            setCounsels(prev=>prev.map(c=>c.ID===editTarget?{...c,Date:form.date,StudentName:form.studentName,ParentName:form.parentName||'',Content:form.content}:c));
+            showToast('수정됨'); setForm({date:today,studentName:'',parentName:'',content:''}); setShowModal(false); setEditTarget(null);
+            try{await api.post({action:'updateCounsel',id:editTarget,...form});reload();}catch(e){showToast('실패','error');reload();}
         } else {
-            const tempId = 'temp-' + Date.now();
-            const newC = { ID:tempId, Date:form.date, StudentName:form.studentName, ParentName:form.parentName||'', Content:form.content, TeacherName:user.name, CreatedAt:new Date().toISOString() };
-            setCounsels(prev => [newC, ...prev]);
-            showToast('상담 기록이 저장되었습니다');
-            setForm({date:today,studentName:'',parentName:'',content:''}); setShowModal(false);
-            try { await api.post({ action:'addCounsel', ...form, teacherName:user.name }); reload(); }
-            catch(e){ showToast('저장 실패','error'); reload(); }
+            setCounsels(prev=>[{ID:'temp-'+Date.now(),Date:form.date,StudentName:form.studentName,ParentName:form.parentName||'',Content:form.content,TeacherName:user.name,CreatedAt:new Date().toISOString()},...prev]);
+            showToast('저장됨'); setForm({date:today,studentName:'',parentName:'',content:''}); setShowModal(false);
+            try{await api.post({action:'addCounsel',...form,teacherName:user.name});reload();}catch(e){showToast('실패','error');reload();}
         }
         setSaving(false);
     };
 
-    const handleEdit = (c) => {
-        setForm({ date:normalizeDate(c.Date), studentName:c.StudentName, parentName:c.ParentName||'', content:c.Content });
-        setEditTarget(c.ID);
-        setShowModal(true);
-    };
-
-    const handleDelete = async (id) => {
-        if (!confirm('이 상담 기록을 삭제하시겠습니까?')) return;
-        const safeId = String(id||'').trim();
-        if (!safeId) { showToast('삭제 실패: ID 없음','error'); return; }
-        setCounsels(prev => prev.filter(c => c.ID !== id));
-        showToast('삭제되었습니다');
-        try { await api.post({ action:'deleteCounsel', id:safeId }); reload(); }
-        catch(e){ showToast('삭제 실패','error'); reload(); }
-    };
-
     return (
         <div className="fade-in" style={{display:'flex',flexDirection:'column',gap:12,paddingBottom:40}}>
-            <div style={{display:'flex',justifyContent:'flex-end'}}>
+            <PrintHeader title={`상담 기록 — ${user.name} 강사`} dateFrom={dateFrom} dateTo={dateTo}/>
+            <div className="no-print" style={{display:'flex',justifyContent:'flex-end'}}>
                 <button className="btn-primary btn-purple" onClick={()=>{setForm({date:today,studentName:'',parentName:'',content:''});setEditTarget(null);setShowModal(true);}}>
                     <Icon name="chat" size={15}/> 상담 기록 추가
                 </button>
             </div>
-            {myCounsels.length===0 ? <div className="empty-box"><p style={{fontWeight:700}}>상담 기록이 없습니다</p></div> :
-                myCounsels.map(c=>(
+            <PrintFilterBar dateFrom={dateFrom} dateTo={dateTo} onDateFrom={setDateFrom} onDateTo={setDateTo}
+                count={filtered.length} total={myCounsels.length} onPrint={handlePrint}/>
+            {filtered.length===0 ? <div className="empty-box"><p style={{fontWeight:700}}>상담 기록이 없습니다</p></div> :
+                filtered.map(c=>(
                     <div key={c.ID} className="list-item" style={{position:'relative',paddingRight:72}}>
-                        <div className="list-meta">
-                            <span className="badge badge-blue">{formatDate(c.Date)}</span>
-                            <span style={{fontWeight:900,color:'#1e293b'}}>{c.StudentName}</span>
-                            {c.ParentName && <span>학부모: {c.ParentName}</span>}
-                        </div>
+                        <div className="list-meta"><span className="badge badge-blue">{formatDate(c.Date)}</span><span style={{fontWeight:900,color:'#1e293b'}}>{c.StudentName}</span>{c.ParentName&&<span>학부모: {c.ParentName}</span>}</div>
                         <div className="list-content">{c.Content}</div>
                         <div style={{fontSize:11,fontWeight:700,color:'#cbd5e1'}}>{c.TeacherName}</div>
-                        <div style={{position:'absolute',top:12,right:12,display:'flex',gap:4}}>
-                            <button onClick={()=>handleEdit(c)} style={{color:'#94a3b8',padding:6,borderRadius:8,background:'#f8fafc'}} title="수정">
-                                <Icon name="pencil" size={13}/>
-                            </button>
-                            <button onClick={()=>handleDelete(c.ID)} style={{color:'#cbd5e1',padding:6,borderRadius:8,background:'#f8fafc'}} title="삭제">
-                                <Icon name="trash" size={13}/>
-                            </button>
+                        <div style={{position:'absolute',top:12,right:12,display:'flex',gap:4}} className="no-print">
+                            <button onClick={()=>{setForm({date:normalizeDate(c.Date),studentName:c.StudentName,parentName:c.ParentName||'',content:c.Content});setEditTarget(c.ID);setShowModal(true);}} style={{color:'#94a3b8',padding:6,borderRadius:8,background:'#f8fafc'}}><Icon name="pencil" size={13}/></button>
+                            <button onClick={async()=>{if(!confirm('삭제?'))return;setCounsels(prev=>prev.filter(x=>x.ID!==c.ID));showToast('삭제됨');try{await api.post({action:'deleteCounsel',id:String(c.ID)});reload();}catch{showToast('실패','error');}}} style={{color:'#cbd5e1',padding:6,borderRadius:8,background:'#f8fafc'}}><Icon name="trash" size={13}/></button>
                         </div>
                     </div>
                 ))
             }
             {showModal && (
-                <div className="modal-overlay" onClick={e=>e.target===e.currentTarget&&(setShowModal(false),setEditTarget(null))}>
+                <div className="modal-overlay no-print" onClick={e=>e.target===e.currentTarget&&(setShowModal(false),setEditTarget(null))}>
                     <div className="modal-box">
-                        <div className="modal-title">{editTarget?'상담 기록 수정':'학부모 상담 기록'}</div>
+                        <div className="modal-title">{editTarget?'상담 수정':'학부모 상담 기록'}</div>
                         <div><div className="form-label">날짜</div><input className="form-input" type="date" value={form.date} onChange={e=>setForm(f=>({...f,date:e.target.value}))}/></div>
                         <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
                             <div><div className="form-label">학생 이름</div><input className="form-input" value={form.studentName} onChange={e=>setForm(f=>({...f,studentName:e.target.value}))} placeholder="학생 이름"/></div>
                             <div><div className="form-label">학부모 이름 (선택)</div><input className="form-input" value={form.parentName} onChange={e=>setForm(f=>({...f,parentName:e.target.value}))} placeholder="학부모 성함"/></div>
                         </div>
-                        <div><div className="form-label">상담 내용</div><textarea className="form-textarea" value={form.content} onChange={e=>setForm(f=>({...f,content:e.target.value}))} placeholder="상담 내용을 입력해 주세요" style={{minHeight:130}}/></div>
+                        <div><div className="form-label">상담 내용</div><textarea className="form-textarea" value={form.content} onChange={e=>setForm(f=>({...f,content:e.target.value}))} placeholder="상담 내용" style={{minHeight:130}}/></div>
                         <div className="modal-btns">
                             <button className="btn-cancel" onClick={()=>{setShowModal(false);setEditTarget(null);}}>취소</button>
-                            <button className="btn-confirm" style={{background:'#8b5cf6'}} onClick={handleSave} disabled={saving}>
-                                {saving?'저장 중...':editTarget?'수정':'저장'}
-                            </button>
+                            <button className="btn-confirm" style={{background:'#8b5cf6'}} onClick={handleSave} disabled={saving}>{saving?'저장 중...':editTarget?'수정':'저장'}</button>
                         </div>
                     </div>
                 </div>
@@ -1260,150 +1062,189 @@ const CounselView = ({ counsels: initialCounsels, user, today, showToast, reload
     );
 };
 
-// ━━━ 관리자 대시보드 ━━━
+/* ━━━ 관리자 대시보드 — 통합인쇄 ━━━ */
 const AdminDashboard = ({ journals, counsels, absences, notices, teachers, today }) => {
+    const [dateFrom, setDateFrom] = useState('');
+    const [dateTo,   setDateTo]   = useState('');
+    const [teacherFilter, setTeacherFilter] = useState('ALL');
+
     const todayJournals = journals.filter(j=>normalizeDate(j.Date)===today);
     const todayAbsences = absences.filter(a=>normalizeDate(a.Date)===today);
     const thisMonth = today.substring(0,7);
     const monthCounsels = counsels.filter(c=>c.Date&&normalizeDate(c.Date).startsWith(thisMonth));
 
+    // 통합 인쇄용 필터
+    const printFilter = (arr, dateField='Date') => arr.filter(item => {
+        const d = normalizeDate(item[dateField]);
+        if (dateFrom && d < dateFrom) return false;
+        if (dateTo   && d > dateTo)   return false;
+        if (teacherFilter !== 'ALL' && item.TeacherName !== teacherFilter) return false;
+        return true;
+    });
+
+    const pJournals = printFilter(journals);
+    const pAbsences = printFilter(absences);
+    const pCounsels = printFilter(counsels);
+
+    const handlePrint = () => window.print();
+
     return (
         <div className="fade-in" style={{display:'flex',flexDirection:'column',gap:20,paddingBottom:40}}>
-            <div className="grid-3">
-                {[
-                    {label:'오늘 일지 작성',  val:`${todayJournals.length}건`,    color:'#10b981'},
-                    {label:'오늘 결석 사유',   val:`${todayAbsences.length}건`,    color:'#ef4444'},
-                    {label:'이번달 상담',      val:`${monthCounsels.length}건`,    color:'#8b5cf6'},
-                ].map(s=>(
-                    <div key={s.label} className="stat-card">
-                        <div className="stat-label">{s.label}</div>
-                        <div className="stat-val" style={{color:s.color}}>{s.val}</div>
-                    </div>
-                ))}
+
+            {/* 인쇄 헤더 */}
+            <PrintHeader title="전체 통합 보고서" dateFrom={dateFrom} dateTo={dateTo} teacherName={teacherFilter!=='ALL'?teacherFilter:null}/>
+
+            {/* 통합 인쇄 설정 바 */}
+            <div style={{background:'#f8fafc',border:'1px solid #f1f5f9',borderRadius:20,padding:'16px 20px'}} className="no-print">
+                <div style={{fontSize:12,fontWeight:900,color:'#94a3b8',marginBottom:12,letterSpacing:'.05em'}}>🖨️ 통합 인쇄 설정</div>
+                <PrintFilterBar
+                    dateFrom={dateFrom} dateTo={dateTo} onDateFrom={setDateFrom} onDateTo={setDateTo}
+                    count={pJournals.length+pAbsences.length+pCounsels.length}
+                    total={journals.length+absences.length+counsels.length}
+                    onPrint={handlePrint}
+                    showTeacherFilter={true}
+                    teacherFilter={teacherFilter} onTeacherFilter={setTeacherFilter}
+                    teachers={teachers}
+                />
+                <div style={{marginTop:10,display:'flex',gap:12,fontSize:12,fontWeight:700,color:'#64748b'}}>
+                    <span>📋 근무일지 <strong style={{color:'#10b981'}}>{pJournals.length}건</strong></span>
+                    <span>⚠️ 결석사유 <strong style={{color:'#ef4444'}}>{pAbsences.length}건</strong></span>
+                    <span>💬 상담기록 <strong style={{color:'#8b5cf6'}}>{pCounsels.length}건</strong></span>
+                </div>
             </div>
 
-            <div className="grid-2">
-                <div className="card">
-                    <div className="card-title">오늘 강사별 일지 현황</div>
-                    {teachers.length===0 ? <div style={{fontSize:13,color:'#94a3b8',fontWeight:700}}>등록된 강사가 없습니다</div> :
-                        teachers.map(t=>{
-                            const done = todayJournals.some(j=>j.TeacherName===t.Name);
-                            return (
-                                <div key={t.ID} style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'10px 0',borderBottom:'1px solid #f8fafc'}}>
-                                    <div style={{display:'flex',alignItems:'center',gap:8}}>
-                                        <div style={{width:30,height:30,borderRadius:'50%',background:'#f1f5f9',display:'flex',alignItems:'center',justifyContent:'center',fontSize:12,fontWeight:900,color:'#475569'}}>{t.Name[0]}</div>
-                                        <span style={{fontSize:13,fontWeight:900,color:'#1e293b'}}>{t.Name}</span>
+            {/* 인쇄 시 통합 내용 */}
+            <div className="print-only">
+                {/* 근무일지 */}
+                <div className="print-section-title green">📋 근무 일지 ({pJournals.length}건)</div>
+                {pJournals.length===0 ? <p style={{color:'#94a3b8',fontSize:12}}>내역 없음</p> :
+                    pJournals.map(j=>(
+                        <div key={j.ID} className="list-item" style={{marginBottom:8}}>
+                            <div className="list-meta"><span className="badge badge-done">{formatDate(j.Date)}</span><span style={{fontWeight:900}}>{j.TeacherName} 강사</span></div>
+                            <div className="list-content">{j.Content}</div>
+                        </div>
+                    ))
+                }
+                {/* 결석사유 */}
+                <div className="print-section-title red" style={{marginTop:24}}>⚠️ 결석 사유 ({pAbsences.length}건)</div>
+                {pAbsences.length===0 ? <p style={{color:'#94a3b8',fontSize:12}}>내역 없음</p> :
+                    pAbsences.map(a=>(
+                        <div key={a.ID} className="list-item" style={{marginBottom:8}}>
+                            <div className="list-meta"><span className="badge badge-new">{formatDate(a.Date)}</span><span style={{fontWeight:900}}>{a.StudentName}</span>{a.ClassName&&<span style={{color:'#94a3b8'}}>{a.ClassName}</span>}<span style={{marginLeft:'auto',color:'#94a3b8'}}>{a.TeacherName}</span></div>
+                            <div className="list-content">{a.Reason}</div>
+                        </div>
+                    ))
+                }
+                {/* 상담기록 */}
+                <div className="print-section-title purple" style={{marginTop:24}}>💬 상담 기록 ({pCounsels.length}건)</div>
+                {pCounsels.length===0 ? <p style={{color:'#94a3b8',fontSize:12}}>내역 없음</p> :
+                    pCounsels.map(c=>(
+                        <div key={c.ID} className="list-item" style={{marginBottom:8}}>
+                            <div className="list-meta"><span className="badge badge-blue">{formatDate(c.Date)}</span><span style={{fontWeight:900}}>{c.StudentName}</span>{c.ParentName&&<span>학부모: {c.ParentName}</span>}<span style={{marginLeft:'auto',color:'#94a3b8'}}>{c.TeacherName}</span></div>
+                            <div className="list-content">{c.Content}</div>
+                        </div>
+                    ))
+                }
+            </div>
+
+            {/* 일반 대시보드 내용 (화면에서만) */}
+            <div className="no-print">
+                <div className="grid-3">
+                    {[
+                        {label:'오늘 일지 작성', val:`${todayJournals.length}건`, color:'#10b981'},
+                        {label:'오늘 결석 사유', val:`${todayAbsences.length}건`, color:'#ef4444'},
+                        {label:'이번달 상담',    val:`${monthCounsels.length}건`, color:'#8b5cf6'},
+                    ].map(s=>(
+                        <div key={s.label} className="stat-card">
+                            <div className="stat-label">{s.label}</div>
+                            <div className="stat-val" style={{color:s.color}}>{s.val}</div>
+                        </div>
+                    ))}
+                </div>
+                <div style={{marginTop:16}} className="grid-2">
+                    <div className="card">
+                        <div className="card-title">오늘 강사별 일지 현황</div>
+                        {teachers.length===0 ? <div style={{fontSize:13,color:'#94a3b8',fontWeight:700}}>등록된 강사가 없습니다</div> :
+                            teachers.map(t=>{
+                                const done = todayJournals.some(j=>j.TeacherName===t.Name);
+                                return (
+                                    <div key={t.ID} style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'10px 0',borderBottom:'1px solid #f8fafc'}}>
+                                        <div style={{display:'flex',alignItems:'center',gap:8}}>
+                                            <div style={{width:30,height:30,borderRadius:'50%',background:'#f1f5f9',display:'flex',alignItems:'center',justifyContent:'center',fontSize:12,fontWeight:900,color:'#475569'}}>{t.Name[0]}</div>
+                                            <span style={{fontSize:13,fontWeight:900,color:'#1e293b'}}>{t.Name}</span>
+                                        </div>
+                                        <span className={`badge ${done?'badge-done':'badge-warn'}`}>{done?'작성 완료':'미작성'}</span>
                                     </div>
-                                    <span className={`badge ${done?'badge-done':'badge-warn'}`}>{done?'작성 완료':'미작성'}</span>
-                                </div>
-                            );
-                        })
-                    }
-                </div>
-                <div className="card">
-                    <div className="card-title">오늘 결석 사유</div>
-                    {todayAbsences.length===0 ? <div style={{fontSize:13,color:'#94a3b8',fontWeight:700}}>입력된 결석 사유가 없습니다</div> :
-                        todayAbsences.map(a=>(
-                            <div key={a.ID} style={{padding:'10px 0',borderBottom:'1px solid #f8fafc'}}>
-                                <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:4}}>
-                                    <span style={{fontSize:13,fontWeight:900,color:'#1e293b'}}>{a.StudentName}</span>
-                                    {a.ClassName && <span style={{fontSize:11,color:'#94a3b8',fontWeight:700}}>{a.ClassName}</span>}
-                                </div>
-                                <div style={{fontSize:12,color:'#64748b',fontWeight:700}}>{a.Reason}</div>
-                                <div style={{fontSize:11,color:'#cbd5e1',fontWeight:700,marginTop:2}}>{a.TeacherName}</div>
-                            </div>
-                        ))
-                    }
-                </div>
-            </div>
-
-            <div className="card">
-                <div className="card-title">최근 공지사항</div>
-                {notices.slice(0,3).map(n=>(
-                    <div key={n.ID} className="notice-item">
-                        <div className="notice-title">{n.Title}</div>
-                        <div className="notice-body" style={{whiteSpace:'pre-wrap'}}>{n.Content}</div>
-                        <div className="notice-date">{n.CreatedAt?formatDateTime(n.CreatedAt):''}</div>
+                                );
+                            })
+                        }
                     </div>
-                ))}
+                    <div className="card">
+                        <div className="card-title">오늘 결석 사유</div>
+                        {todayAbsences.length===0 ? <div style={{fontSize:13,color:'#94a3b8',fontWeight:700}}>입력된 결석 사유가 없습니다</div> :
+                            todayAbsences.map(a=>(
+                                <div key={a.ID} style={{padding:'10px 0',borderBottom:'1px solid #f8fafc'}}>
+                                    <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:4}}>
+                                        <span style={{fontSize:13,fontWeight:900,color:'#1e293b'}}>{a.StudentName}</span>
+                                        {a.ClassName&&<span style={{fontSize:11,color:'#94a3b8',fontWeight:700}}>{a.ClassName}</span>}
+                                    </div>
+                                    <div style={{fontSize:12,color:'#64748b',fontWeight:700}}>{a.Reason}</div>
+                                    <div style={{fontSize:11,color:'#cbd5e1',fontWeight:700,marginTop:2}}>{a.TeacherName}</div>
+                                </div>
+                            ))
+                        }
+                    </div>
+                </div>
+                <div className="card" style={{marginTop:16}}>
+                    <div className="card-title">최근 공지사항</div>
+                    {notices.slice(0,3).map(n=>(
+                        <div key={n.ID} className="notice-item">
+                            <div className="notice-title">{n.Title}</div>
+                            <div className="notice-body" style={{whiteSpace:'pre-wrap'}}>{n.Content}</div>
+                            <div className="notice-date">{n.CreatedAt?formatDateTime(n.CreatedAt):''}</div>
+                        </div>
+                    ))}
+                </div>
             </div>
         </div>
     );
 };
 
-// ━━━ 강사/관리자 계정 관리 ━━━
-const TeacherMgr = ({ teachers, admins, showToast, reload }) => {
+/* ━━━ 강사 계정 관리 ━━━ */
+const TeacherMgr = ({ teachers, showToast, reload }) => {
     const [expanded, setExpanded] = useState(null);
-    const [tab,      setTab]      = useState('teacher');
+    const [tab, setTab] = useState('teacher');
+    const ADMIN_LIST = ['김남탁','김유식','사공은경','김윤희'];
 
     const handleResetTeacherPw = async (name) => {
         if (!confirm(`${name} 강사의 비번을 1234로 초기화할까요?`)) return;
-        try {
-            await api.post({ action:'resetTeacherPw', name });
-            showToast(`${name} 강사 비번이 1234로 초기화됐습니다`);
-            reload();
-        } catch(e){ showToast('초기화 실패','error'); }
+        try { await api.post({action:'resetTeacherPw',name}); showToast(`${name} 강사 비번 초기화됨`); reload(); }
+        catch(e){ showToast('초기화 실패','error'); }
     };
-
-    const handleResetAdminPw = async (name) => {
-        if (!confirm(`${name} 관리자의 비번을 1234로 초기화할까요?`)) return;
-        try {
-            await api.post({ action:'resetAdminPw', name });
-            showToast(`${name} 관리자 비번이 1234로 초기화됐습니다`);
-        } catch(e){ showToast('초기화 실패','error'); }
-    };
-
     const handleDeleteTeacher = async (id, name) => {
         if (!confirm(`${name} 강사 계정을 삭제하시겠습니까?`)) return;
-        try { await api.post({action:'deleteTeacher',id}); showToast('삭제되었습니다'); reload(); }
+        try { await api.post({action:'deleteTeacher',id}); showToast('삭제됨'); reload(); }
         catch(e){ showToast('삭제 실패','error'); }
     };
-
-    const safeTeachers = (teachers||[]).map(t => ({
-        ID:       t.ID       || t.id       || '',
-        Name:     t.Name     || t.name     || '',
-        Classes:  t.Classes  || t.classes  || '',
-        IsFirst:  t.IsFirst  || t.isFirst  || false,
-    }));
-
-    const safeAdmins = (admins||[]).map(a => ({
-        name:    a.name    || '',
-        isFirst: a.isFirst || false,
-    }));
 
     return (
         <div className="fade-in" style={{display:'flex',flexDirection:'column',gap:12,paddingBottom:40}}>
             <div style={{display:'flex',gap:8}}>
-                <button onClick={()=>setTab('teacher')} style={{flex:1,padding:'10px',borderRadius:14,fontSize:13,fontWeight:900,background:tab==='teacher'?'#0f172a':'#f8fafc',color:tab==='teacher'?'#fff':'#94a3b8',transition:'all .15s'}}>
-                    강사 계정
-                </button>
-                <button onClick={()=>setTab('admin')} style={{flex:1,padding:'10px',borderRadius:14,fontSize:13,fontWeight:900,background:tab==='admin'?'#f97316':'#f8fafc',color:tab==='admin'?'#fff':'#94a3b8',transition:'all .15s'}}>
-                    관리자 계정
-                </button>
+                <button onClick={()=>setTab('teacher')} style={{flex:1,padding:'10px',borderRadius:14,fontSize:13,fontWeight:900,background:tab==='teacher'?'#0f172a':'#f8fafc',color:tab==='teacher'?'#fff':'#94a3b8'}}>강사 계정</button>
+                <button onClick={()=>setTab('admin')} style={{flex:1,padding:'10px',borderRadius:14,fontSize:13,fontWeight:900,background:tab==='admin'?'#f97316':'#f8fafc',color:tab==='admin'?'#fff':'#94a3b8'}}>관리자 계정</button>
             </div>
-
-            {tab === 'teacher' && (
-                <div style={{padding:'14px 18px',background:'#f0fdf4',border:'1px solid #bbf7d0',borderRadius:14,fontSize:12,fontWeight:700,color:'#166534',lineHeight:1.9}}>
-                    <div style={{fontWeight:900,marginBottom:4}}>강사 계정 안내</div>
-                    <div>• 초기 비번: <span style={{color:'#16a34a',fontWeight:900}}>1234</span></div>
-                    <div>• 강사가 비번 변경 요청 시 관리자가 비번을 시트에서 수정 가능</div>
-                    <div>• 강사가 첫 로그인하면 자동으로 목록에 등록됩니다</div>
-                </div>
-            )}
-            {tab === 'admin' && (
-                <div style={{padding:'14px 18px',background:'#fff7ed',border:'1px solid #fed7aa',borderRadius:14,fontSize:12,fontWeight:700,color:'#92400e',lineHeight:1.9}}>
-                    <div style={{fontWeight:900,marginBottom:4}}>관리자 계정 안내</div>
-                    <div>• 관리자 비번은 별도 안내된 비번을 사용해 주세요</div>
-                </div>
-            )}
-
-            {tab === 'teacher' && (
+            {tab==='teacher' && (
                 <>
-                    {safeTeachers.length === 0
-                        ? <div className="empty-box"><p style={{fontWeight:700}}>등록된 강사가 없습니다</p><span style={{fontSize:13}}>강사가 첫 로그인하면 자동으로 표시됩니다</span></div>
-                        : safeTeachers.map(t => {
-                            const labels = getClassLabels(t.Classes);
-                            const isExp  = expanded === t.ID;
+                    <div style={{padding:'14px 18px',background:'#f0fdf4',border:'1px solid #bbf7d0',borderRadius:14,fontSize:12,fontWeight:700,color:'#166534',lineHeight:1.9}}>
+                        <div style={{fontWeight:900,marginBottom:4}}>강사 계정 안내</div>
+                        <div>• 초기 비번: <span style={{color:'#16a34a',fontWeight:900}}>1234</span></div>
+                        <div>• 강사가 첫 로그인하면 자동으로 목록에 등록됩니다</div>
+                    </div>
+                    {(teachers||[]).length===0
+                        ? <div className="empty-box"><p style={{fontWeight:700}}>등록된 강사가 없습니다</p></div>
+                        : (teachers||[]).map(t=>{
+                            const labels = getClassLabels(t.Classes||'');
+                            const isExp = expanded===t.ID;
                             return (
                                 <div key={t.ID} className="list-item" style={{gap:12}}>
                                     <div style={{display:'flex',alignItems:'center',justifyContent:'space-between'}}>
@@ -1412,35 +1253,21 @@ const TeacherMgr = ({ teachers, admins, showToast, reload }) => {
                                             <div>
                                                 <div style={{display:'flex',alignItems:'center',gap:6}}>
                                                     <span style={{fontSize:14,fontWeight:900,color:'#1e293b'}}>{t.Name} 강사</span>
-                                                    {t.IsFirst && <span className="badge badge-warn">설정 미완료</span>}
+                                                    {t.IsFirst&&<span className="badge badge-warn">설정 미완료</span>}
                                                 </div>
                                                 <div style={{fontSize:11,fontWeight:700,color:'#94a3b8'}}>담당 {labels.length}개 반</div>
                                             </div>
                                         </div>
                                         <div style={{display:'flex',alignItems:'center',gap:6}}>
-                                            <button onClick={()=>setExpanded(isExp?null:t.ID)}
-                                                style={{fontSize:11,fontWeight:900,padding:'6px 10px',borderRadius:10,background:isExp?'#f1f5f9':'#f8fafc',color:'#64748b'}}>
-                                                {isExp?'접기':'담당반'}
-                                            </button>
-                                            <button onClick={()=>handleResetTeacherPw(t.Name)}
-                                                style={{fontSize:11,fontWeight:900,padding:'6px 10px',borderRadius:10,background:'#fff7ed',color:'#f97316',border:'1px solid #fed7aa'}}>
-                                                비번 초기화
-                                            </button>
-                                            <button onClick={()=>handleDeleteTeacher(t.ID,t.Name)} style={{color:'#cbd5e1',padding:6}}>
-                                                <Icon name="trash" size={14}/>
-                                            </button>
+                                            <button onClick={()=>setExpanded(isExp?null:t.ID)} style={{fontSize:11,fontWeight:900,padding:'6px 10px',borderRadius:10,background:isExp?'#f1f5f9':'#f8fafc',color:'#64748b'}}>{isExp?'접기':'담당반'}</button>
+                                            <button onClick={()=>handleResetTeacherPw(t.Name)} style={{fontSize:11,fontWeight:900,padding:'6px 10px',borderRadius:10,background:'#fff7ed',color:'#f97316',border:'1px solid #fed7aa'}}>비번 초기화</button>
+                                            <button onClick={()=>handleDeleteTeacher(t.ID,t.Name)} style={{color:'#cbd5e1',padding:6}}><Icon name="trash" size={14}/></button>
                                         </div>
                                     </div>
-                                    {isExp && (
+                                    {isExp&&(
                                         <div style={{background:'#f8fafc',borderRadius:12,padding:12}}>
-                                            {labels.length===0
-                                                ? <div style={{fontSize:12,color:'#94a3b8',fontWeight:700}}>담당 반 없음</div>
-                                                : <div style={{display:'flex',flexWrap:'wrap',gap:6}}>
-                                                    {labels.map((l,i)=>(
-                                                        <span key={i} style={{fontSize:11,fontWeight:900,padding:'4px 10px',borderRadius:10,background:'#0f172a',color:'#fff'}}>{l}</span>
-                                                    ))}
-                                                  </div>
-                                            }
+                                            {labels.length===0?<div style={{fontSize:12,color:'#94a3b8',fontWeight:700}}>담당 반 없음</div>:
+                                                <div style={{display:'flex',flexWrap:'wrap',gap:6}}>{labels.map((l,i)=><span key={i} style={{fontSize:11,fontWeight:900,padding:'4px 10px',borderRadius:10,background:'#0f172a',color:'#fff'}}>{l}</span>)}</div>}
                                         </div>
                                     )}
                                 </div>
@@ -1449,22 +1276,18 @@ const TeacherMgr = ({ teachers, admins, showToast, reload }) => {
                     }
                 </>
             )}
-
-            {tab === 'admin' && (
+            {tab==='admin' && (
                 <>
-                    {safeAdmins.map((a,i) => (
+                    <div style={{padding:'14px 18px',background:'#fff7ed',border:'1px solid #fed7aa',borderRadius:14,fontSize:12,fontWeight:700,color:'#92400e',lineHeight:1.9}}>
+                        <div style={{fontWeight:900,marginBottom:4}}>관리자 계정 안내</div>
+                        <div>• 관리자 비번은 별도 안내된 비번을 사용해 주세요</div>
+                    </div>
+                    {ADMIN_LIST.map((name,i)=>(
                         <div key={i} className="list-item" style={{flexDirection:'row',alignItems:'center',justifyContent:'space-between'}}>
                             <div style={{display:'flex',alignItems:'center',gap:10}}>
-                                <div style={{width:40,height:40,borderRadius:'50%',background:'#f97316',color:'#fff',display:'flex',alignItems:'center',justifyContent:'center',fontSize:15,fontWeight:900}}>{(a.name||'?')[0]}</div>
-                                <div>
-                                    <span style={{fontSize:14,fontWeight:900,color:'#1e293b'}}>{a.name} 관리자</span>
-                                    <div style={{fontSize:11,fontWeight:700,color:'#94a3b8'}}>일반 관리자</div>
-                                </div>
+                                <div style={{width:40,height:40,borderRadius:'50%',background:'#f97316',color:'#fff',display:'flex',alignItems:'center',justifyContent:'center',fontSize:15,fontWeight:900}}>{name[0]}</div>
+                                <div><span style={{fontSize:14,fontWeight:900,color:'#1e293b'}}>{name} 관리자</span><div style={{fontSize:11,fontWeight:700,color:'#94a3b8'}}>일반 관리자</div></div>
                             </div>
-                            <button onClick={()=>handleResetAdminPw(a.name)}
-                                style={{fontSize:11,fontWeight:900,padding:'8px 12px',borderRadius:10,background:'#fff7ed',color:'#f97316',border:'1px solid #fed7aa'}}>
-                                비번 초기화
-                            </button>
                         </div>
                     ))}
                 </>
@@ -1473,28 +1296,18 @@ const TeacherMgr = ({ teachers, admins, showToast, reload }) => {
     );
 };
 
-// ━━━ 공통 검색바 컴포넌트 ━━━
-const SearchBar = ({ value, onChange, placeholder='검색어를 입력하세요...', count, total }) => (
+/* ━━━ 공통 검색바 ━━━ */
+const SearchBar = ({ value, onChange, placeholder, count, total }) => (
     <div style={{display:'flex',flexDirection:'column',gap:10,background:'#fff',border:'1px solid #f1f5f9',borderRadius:20,padding:16,boxShadow:'0 1px 4px rgba(0,0,0,.04)',marginBottom:4}}>
         <div style={{position:'relative'}}>
             <svg style={{position:'absolute',left:14,top:'50%',transform:'translateY(-50%)',color:'#cbd5e1'}} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
-            <input
-                style={{width:'100%',padding:'11px 40px',background:'#f8fafc',border:'2px solid transparent',borderRadius:14,fontSize:13,fontWeight:700,outline:'none',color:'#1e293b',transition:'border-color .2s'}}
-                onFocus={e=>e.target.style.borderColor='#fb923c'}
-                onBlur={e=>e.target.style.borderColor='transparent'}
+            <input style={{width:'100%',padding:'11px 40px',background:'#f8fafc',border:'2px solid transparent',borderRadius:14,fontSize:13,fontWeight:700,outline:'none',color:'#1e293b',transition:'border-color .2s'}}
+                onFocus={e=>e.target.style.borderColor='#fb923c'} onBlur={e=>e.target.style.borderColor='transparent'}
                 placeholder={placeholder} value={value} onChange={e=>onChange(e.target.value)}/>
-            {value && (
-                <button onClick={()=>onChange('')} style={{position:'absolute',right:12,top:'50%',transform:'translateY(-50%)',color:'#cbd5e1',display:'flex'}}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M6 18L18 6M6 6l12 12"/></svg>
-                </button>
-            )}
+            {value&&<button onClick={()=>onChange('')} style={{position:'absolute',right:12,top:'50%',transform:'translateY(-50%)',color:'#cbd5e1',display:'flex'}}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M6 18L18 6M6 6l12 12"/></svg></button>}
         </div>
         <div style={{fontSize:11,fontWeight:700,color:'#94a3b8',borderTop:'1px solid #f8fafc',paddingTop:8}}>
-            {value
-                ? <><span style={{color:'#f97316',fontWeight:900}}>{count}건</span> / 전체 {total}건
-                    {count===0 && <span style={{color:'#ef4444',marginLeft:12}}>검색 결과가 없습니다</span>}</>
-                : <>전체 <span style={{color:'#1e293b',fontWeight:900}}>{total}건</span></>
-            }
+            {value?<><span style={{color:'#f97316',fontWeight:900}}>{count}건</span> / 전체 {total}건{count===0&&<span style={{color:'#ef4444',marginLeft:12}}>검색 결과가 없습니다</span>}</>:<>전체 <span style={{color:'#1e293b',fontWeight:900}}>{total}건</span></>}
         </div>
     </div>
 );
@@ -1502,28 +1315,35 @@ const SearchBar = ({ value, onChange, placeholder='검색어를 입력하세요.
 const Highlight = ({ text, keyword }) => {
     if (!keyword||!text) return <>{text}</>;
     const parts = String(text).split(new RegExp(`(${keyword})`, 'gi'));
-    return <>{parts.map((p,i) => p.toLowerCase()===keyword.toLowerCase()
-        ? <mark key={i} style={{background:'#fef08a',borderRadius:3,padding:'0 2px'}}>{p}</mark>
-        : p
-    )}</>;
+    return <>{parts.map((p,i)=>p.toLowerCase()===keyword.toLowerCase()?<mark key={i} style={{background:'#fef08a',borderRadius:3,padding:'0 2px'}}>{p}</mark>:p)}</>;
 };
 
-// ━━━ 관리자용 전체 뷰 (CreatedAt 기준 정렬 + 검색) ━━━
-const JournalAllView = ({ journals }) => {
+/* ━━━ 관리자용 전체 뷰 — 날짜필터 + 강사필터 + 인쇄 ━━━ */
+const JournalAllView = ({ journals, teachers }) => {
     const [q, setQ] = useState('');
-    // ✅ CreatedAt 기준 정렬
+    const [dateFrom, setDateFrom] = useState('');
+    const [dateTo,   setDateTo]   = useState('');
+    const [teacherFilter, setTeacherFilter] = useState('ALL');
     const sorted = sortByCreatedAt(journals);
-    const filtered = sorted.filter(j => !q || [j.TeacherName,j.Content,j.Date].some(v=>String(v).includes(q)));
+    const filtered = sorted.filter(j => {
+        const d = normalizeDate(j.Date);
+        if (dateFrom && d < dateFrom) return false;
+        if (dateTo   && d > dateTo)   return false;
+        if (teacherFilter !== 'ALL' && j.TeacherName !== teacherFilter) return false;
+        if (q && ![j.TeacherName,j.Content,j.Date].some(v=>String(v).includes(q))) return false;
+        return true;
+    });
     return (
         <div className="fade-in" style={{display:'flex',flexDirection:'column',gap:12,paddingBottom:40}}>
+            <PrintHeader title="근무 일지 전체" dateFrom={dateFrom} dateTo={dateTo} teacherName={teacherFilter!=='ALL'?teacherFilter:null}/>
+            <PrintFilterBar dateFrom={dateFrom} dateTo={dateTo} onDateFrom={setDateFrom} onDateTo={setDateTo}
+                count={filtered.length} total={sorted.length} onPrint={()=>window.print()}
+                showTeacherFilter={true} teacherFilter={teacherFilter} onTeacherFilter={setTeacherFilter} teachers={teachers}/>
             <SearchBar value={q} onChange={setQ} placeholder="강사명, 내용으로 검색..." count={filtered.length} total={sorted.length}/>
-            {filtered.length===0 ? <div className="empty-box"><p style={{fontWeight:700}}>검색 결과가 없습니다</p></div> :
+            {filtered.length===0?<div className="empty-box"><p style={{fontWeight:700}}>검색 결과가 없습니다</p></div>:
                 filtered.map(j=>(
                     <div key={j.ID} className="list-item">
-                        <div className="list-meta">
-                            <span className="badge badge-done">{formatDate(j.Date)}</span>
-                            <span style={{fontWeight:900,color:'#1e293b'}}><Highlight text={j.TeacherName} keyword={q}/> 강사</span>
-                        </div>
+                        <div className="list-meta"><span className="badge badge-done">{formatDate(j.Date)}</span><span style={{fontWeight:900,color:'#1e293b'}}><Highlight text={j.TeacherName} keyword={q}/> 강사</span></div>
                         <div className="list-content"><Highlight text={j.Content} keyword={q}/></div>
                     </div>
                 ))
@@ -1532,23 +1352,31 @@ const JournalAllView = ({ journals }) => {
     );
 };
 
-const AbsenceAllView = ({ absences }) => {
+const AbsenceAllView = ({ absences, teachers }) => {
     const [q, setQ] = useState('');
-    // ✅ CreatedAt 기준 정렬
+    const [dateFrom, setDateFrom] = useState('');
+    const [dateTo,   setDateTo]   = useState('');
+    const [teacherFilter, setTeacherFilter] = useState('ALL');
     const sorted = sortByCreatedAt(absences);
-    const filtered = sorted.filter(a => !q || [a.StudentName,a.ClassName,a.Reason,a.TeacherName,a.Date].some(v=>String(v).includes(q)));
+    const filtered = sorted.filter(a => {
+        const d = normalizeDate(a.Date);
+        if (dateFrom && d < dateFrom) return false;
+        if (dateTo   && d > dateTo)   return false;
+        if (teacherFilter !== 'ALL' && a.TeacherName !== teacherFilter) return false;
+        if (q && ![a.StudentName,a.ClassName,a.Reason,a.TeacherName,a.Date].some(v=>String(v).includes(q))) return false;
+        return true;
+    });
     return (
         <div className="fade-in" style={{display:'flex',flexDirection:'column',gap:12,paddingBottom:40}}>
+            <PrintHeader title="결석 사유 전체" dateFrom={dateFrom} dateTo={dateTo} teacherName={teacherFilter!=='ALL'?teacherFilter:null}/>
+            <PrintFilterBar dateFrom={dateFrom} dateTo={dateTo} onDateFrom={setDateFrom} onDateTo={setDateTo}
+                count={filtered.length} total={sorted.length} onPrint={()=>window.print()}
+                showTeacherFilter={true} teacherFilter={teacherFilter} onTeacherFilter={setTeacherFilter} teachers={teachers}/>
             <SearchBar value={q} onChange={setQ} placeholder="학생 이름, 사유, 강사명으로 검색..." count={filtered.length} total={sorted.length}/>
-            {filtered.length===0 ? <div className="empty-box"><p style={{fontWeight:700}}>검색 결과가 없습니다</p></div> :
+            {filtered.length===0?<div className="empty-box"><p style={{fontWeight:700}}>검색 결과가 없습니다</p></div>:
                 filtered.map(a=>(
                     <div key={a.ID} className="list-item">
-                        <div className="list-meta">
-                            <span className="badge badge-new">{formatDate(a.Date)}</span>
-                            <span style={{fontWeight:900,color:'#1e293b'}}><Highlight text={a.StudentName} keyword={q}/></span>
-                            {a.ClassName && <span style={{color:'#94a3b8'}}><Highlight text={a.ClassName} keyword={q}/></span>}
-                            <span style={{marginLeft:'auto',color:'#94a3b8'}}><Highlight text={a.TeacherName} keyword={q}/></span>
-                        </div>
+                        <div className="list-meta"><span className="badge badge-new">{formatDate(a.Date)}</span><span style={{fontWeight:900,color:'#1e293b'}}><Highlight text={a.StudentName} keyword={q}/></span>{a.ClassName&&<span style={{color:'#94a3b8'}}><Highlight text={a.ClassName} keyword={q}/></span>}<span style={{marginLeft:'auto',color:'#94a3b8'}}><Highlight text={a.TeacherName} keyword={q}/></span></div>
                         <div className="list-content"><Highlight text={a.Reason} keyword={q}/></div>
                     </div>
                 ))
@@ -1557,23 +1385,31 @@ const AbsenceAllView = ({ absences }) => {
     );
 };
 
-const CounselAllView = ({ counsels }) => {
+const CounselAllView = ({ counsels, teachers }) => {
     const [q, setQ] = useState('');
-    // ✅ CreatedAt 기준 정렬
+    const [dateFrom, setDateFrom] = useState('');
+    const [dateTo,   setDateTo]   = useState('');
+    const [teacherFilter, setTeacherFilter] = useState('ALL');
     const sorted = sortByCreatedAt(counsels);
-    const filtered = sorted.filter(c => !q || [c.StudentName,c.ParentName,c.Content,c.TeacherName,c.Date].some(v=>String(v).includes(q)));
+    const filtered = sorted.filter(c => {
+        const d = normalizeDate(c.Date);
+        if (dateFrom && d < dateFrom) return false;
+        if (dateTo   && d > dateTo)   return false;
+        if (teacherFilter !== 'ALL' && c.TeacherName !== teacherFilter) return false;
+        if (q && ![c.StudentName,c.ParentName,c.Content,c.TeacherName,c.Date].some(v=>String(v).includes(q))) return false;
+        return true;
+    });
     return (
         <div className="fade-in" style={{display:'flex',flexDirection:'column',gap:12,paddingBottom:40}}>
+            <PrintHeader title="상담 기록 전체" dateFrom={dateFrom} dateTo={dateTo} teacherName={teacherFilter!=='ALL'?teacherFilter:null}/>
+            <PrintFilterBar dateFrom={dateFrom} dateTo={dateTo} onDateFrom={setDateFrom} onDateTo={setDateTo}
+                count={filtered.length} total={sorted.length} onPrint={()=>window.print()}
+                showTeacherFilter={true} teacherFilter={teacherFilter} onTeacherFilter={setTeacherFilter} teachers={teachers}/>
             <SearchBar value={q} onChange={setQ} placeholder="학생 이름, 학부모 이름, 내용으로 검색..." count={filtered.length} total={sorted.length}/>
-            {filtered.length===0 ? <div className="empty-box"><p style={{fontWeight:700}}>검색 결과가 없습니다</p></div> :
+            {filtered.length===0?<div className="empty-box"><p style={{fontWeight:700}}>검색 결과가 없습니다</p></div>:
                 filtered.map(c=>(
                     <div key={c.ID} className="list-item">
-                        <div className="list-meta">
-                            <span className="badge badge-blue">{formatDate(c.Date)}</span>
-                            <span style={{fontWeight:900,color:'#1e293b'}}><Highlight text={c.StudentName} keyword={q}/></span>
-                            {c.ParentName && <span>학부모: <Highlight text={c.ParentName} keyword={q}/></span>}
-                            <span style={{marginLeft:'auto',color:'#94a3b8'}}><Highlight text={c.TeacherName} keyword={q}/></span>
-                        </div>
+                        <div className="list-meta"><span className="badge badge-blue">{formatDate(c.Date)}</span><span style={{fontWeight:900,color:'#1e293b'}}><Highlight text={c.StudentName} keyword={q}/></span>{c.ParentName&&<span>학부모: <Highlight text={c.ParentName} keyword={q}/></span>}<span style={{marginLeft:'auto',color:'#94a3b8'}}><Highlight text={c.TeacherName} keyword={q}/></span></div>
                         <div className="list-content"><Highlight text={c.Content} keyword={q}/></div>
                     </div>
                 ))
@@ -1582,19 +1418,13 @@ const CounselAllView = ({ counsels }) => {
     );
 };
 
-// ━━━ 메인 앱 ━━━
+/* ━━━ 메인 앱 ━━━ */
 const App = () => {
     const [user, setUser] = useState(null);
-
-    const handleLogin     = (u) => setUser(u);
-    const handleLogout    = () => setUser(null);
-    const handleSetupDone = (u) => setUser(u);
-
-    if (!user) return <LoginScreen onLogin={handleLogin}/>;
-    if (user.role==='teacher' && user.isFirst) return <SetupScreen user={user} onDone={handleSetupDone}/>;
-    if (user.role==='admin' && !user.isSuper && user.isFirst) return <AdminApp user={{...user, isFirst:false}} onLogout={handleLogout}/>;
-    if (user.role==='admin') return <AdminApp user={user} onLogout={handleLogout}/>;
-    return <TeacherApp user={user} onLogout={handleLogout}/>;
+    if (!user) return <LoginScreen onLogin={u=>setUser(u)}/>;
+    if (user.role==='teacher' && user.isFirst) return <SetupScreen user={user} onDone={u=>setUser(u)}/>;
+    if (user.role==='admin') return <AdminApp user={user} onLogout={()=>setUser(null)}/>;
+    return <TeacherApp user={user} onLogout={()=>setUser(null)}/>;
 };
 
 ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
