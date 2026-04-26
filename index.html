@@ -394,30 +394,77 @@ const Toast = ({ message, type='success', onDone }) => {
     return <div className={`toast toast-${type}`}><Icon name={type==='success'?'check':'alert'} size={14}/>{message}</div>;
 };
 
-/* ━━━ 날짜 필터 + 인쇄 공통 바 ━━━ */
-const PrintFilterBar = ({ dateFrom, dateTo, onDateFrom, onDateTo, count, total, onPrint, teacherFilter, onTeacherFilter, teachers, showTeacherFilter=false }) => (
-    <div className="date-filter-bar no-print">
-        <span className="date-filter-label">📅 기간</span>
-        <input className="date-filter-input" type="date" value={dateFrom} onChange={e=>onDateFrom(e.target.value)}/>
-        <span className="date-filter-tilde">~</span>
-        <input className="date-filter-input" type="date" value={dateTo} onChange={e=>onDateTo(e.target.value)}/>
-        {showTeacherFilter && (
-            <select className="date-filter-input" value={teacherFilter} onChange={e=>onTeacherFilter(e.target.value)}
-                style={{minWidth:90}}>
-                <option value="ALL">전체 강사</option>
-                {teachers.map(t=><option key={t.ID||t.name} value={t.Name||t.name}>{t.Name||t.name}</option>)}
-            </select>
-        )}
-        {(dateFrom||dateTo) && (
-            <span className="date-filter-count">
-                <span style={{color:'#f97316',fontWeight:900}}>{count}건</span> / 전체 {total}건
-            </span>
-        )}
-        <button className="btn-print" onClick={onPrint} style={{marginLeft:'auto'}}>
-            <Icon name="print" size={15}/> 인쇄
-        </button>
-    </div>
-);
+/* ━━━ 날짜 필터 + 인쇄 공통 바 (C방법: 빠른탭 + 직접입력) ━━━ */
+const PrintFilterBar = ({ dateFrom, dateTo, onDateFrom, onDateTo, count, total, onPrint, teacherFilter, onTeacherFilter, teachers, showTeacherFilter=false }) => {
+    const today = getKSTDate();
+    const getWeekRange = () => {
+        const d = new Date();
+        const day = d.getDay();
+        const mon = new Date(d); mon.setDate(d.getDate() - (day===0?6:day-1));
+        const sun = new Date(mon); sun.setDate(mon.getDate()+6);
+        return [getKSTDate(mon), getKSTDate(sun)];
+    };
+    const getMonthRange = () => {
+        const d = new Date();
+        const first = new Date(d.getFullYear(), d.getMonth(), 1);
+        const last  = new Date(d.getFullYear(), d.getMonth()+1, 0);
+        return [getKSTDate(first), getKSTDate(last)];
+    };
+    const activeTab = (() => {
+        if (!dateFrom && !dateTo) return 'all';
+        if (dateFrom===today && dateTo===today) return 'today';
+        const [ws,we] = getWeekRange();
+        if (dateFrom===ws && dateTo===we) return 'week';
+        const [ms,me] = getMonthRange();
+        if (dateFrom===ms && dateTo===me) return 'month';
+        return 'custom';
+    })();
+    const setTab = (tab) => {
+        if (tab==='all')   { onDateFrom(''); onDateTo(''); }
+        if (tab==='today') { onDateFrom(today); onDateTo(today); }
+        if (tab==='week')  { const [s,e]=getWeekRange();  onDateFrom(s); onDateTo(e); }
+        if (tab==='month') { const [s,e]=getMonthRange(); onDateFrom(s); onDateTo(e); }
+    };
+    const tabs = [
+        {id:'all',label:'전체'},{id:'today',label:'오늘'},
+        {id:'week',label:'이번주'},{id:'month',label:'이번달'},
+    ];
+    return (
+        <div className="date-filter-bar no-print" style={{flexDirection:'column',gap:10,padding:'14px 16px'}}>
+            <div style={{display:'flex',gap:6,width:'100%'}}>
+                {tabs.map(t=>(
+                    <button key={t.id} onClick={()=>setTab(t.id)} style={{
+                        flex:1,padding:'7px 0',borderRadius:10,fontSize:12,fontWeight:900,
+                        background:activeTab===t.id?'#0f172a':'#f8fafc',
+                        color:activeTab===t.id?'#fff':'#94a3b8',
+                        border:`2px solid ${activeTab===t.id?'#0f172a':'#f1f5f9'}`,
+                        transition:'all .15s',
+                    }}>{t.label}</button>
+                ))}
+            </div>
+            <div style={{display:'flex',alignItems:'center',gap:6,flexWrap:'wrap'}}>
+                <span style={{fontSize:11,fontWeight:900,color:'#94a3b8',flexShrink:0}}>📅</span>
+                <input className="date-filter-input" type="date" value={dateFrom} onChange={e=>onDateFrom(e.target.value)} style={{flex:1,minWidth:0}}/>
+                <span style={{fontSize:12,fontWeight:900,color:'#cbd5e1',flexShrink:0}}>~</span>
+                <input className="date-filter-input" type="date" value={dateTo} onChange={e=>onDateTo(e.target.value)} style={{flex:1,minWidth:0}}/>
+                {showTeacherFilter && (
+                    <select className="date-filter-input" value={teacherFilter} onChange={e=>onTeacherFilter(e.target.value)} style={{flex:1,minWidth:0}}>
+                        <option value="ALL">전체 강사</option>
+                        {teachers.map(t=><option key={t.ID||t.name} value={t.Name||t.name}>{t.Name||t.name}</option>)}
+                    </select>
+                )}
+                <button className="btn-print" onClick={onPrint} style={{flexShrink:0}}>
+                    <Icon name="print" size={15}/> 인쇄
+                </button>
+            </div>
+            {(dateFrom||dateTo) && (
+                <div style={{fontSize:11,fontWeight:700,color:'#94a3b8'}}>
+                    필터: <span style={{color:'#f97316',fontWeight:900}}>{count}건</span> / 전체 {total}건
+                </div>
+            )}
+        </div>
+    );
+};
 
 /* ━━━ 인쇄 헤더 (인쇄 시에만 보임) ━━━ */
 const PrintHeader = ({ title, dateFrom, dateTo, teacherName }) => (
