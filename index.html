@@ -177,7 +177,6 @@
         .btn-print, .btn-primary, .modal-overlay { display: none !important; }
         .badge { border: 1px solid #e2e8f0; }
         .notice-item { break-inside: avoid; }
-        /* 인쇄 구역 타이틀 */
         .print-section-title {
             font-size: 16pt; font-weight: 900; color: #0f172a;
             border-bottom: 3px solid #0f172a; padding-bottom: 8pt;
@@ -196,7 +195,7 @@
 <script type="text/babel">
 const { useState, useEffect, useCallback, useMemo, useRef } = React;
 
-const SUPER_ADMIN_PW = 'l2387008!';
+const SUPER_ADMIN_PW = 'l2387008';
 const TEACHER_INIT_PW = '1234';
 
 const getKSTDate = (d = new Date()) => new Date(d.getTime() + 9*3600*1000).toISOString().split('T')[0];
@@ -382,6 +381,7 @@ const PATHS = {
     trash:    "M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0",
     print:    "M6.72 13.829c-.24.03-.48.062-.72.096m.72-.096a42.415 42.415 0 0110.56 0m-10.56 0L6.34 18m10.94-4.171c.24.03.48.062.72.096m-.72-.096L17.66 18m0 0l.229 2.523a1.125 1.125 0 01-1.12 1.227H7.231c-.662 0-1.18-.568-1.12-1.227L6.34 18m11.318 0h1.091A2.25 2.25 0 0021 15.75V9.456c0-1.081-.768-2.015-1.837-2.175a48.055 48.055 0 00-1.913-.247M6.34 18H5.25A2.25 2.25 0 013 15.75V9.456c0-1.081.768-2.015 1.837-2.175a48.041 48.041 0 011.913-.247m10.5 0a48.536 48.536 0 00-10.5 0m10.5 0V3.375c0-.621-.504-1.125-1.125-1.125h-8.25c-.621 0-1.125.504-1.125 1.125v3.659M18 10.5h.008v.008H18V10.5zm-3 0h.008v.008H15V10.5z",
     eye:      "M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z M15 12a3 3 0 11-6 0 3 3 0 016 0z",
+    download: "M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3",
 };
 
 const Icon = ({ name, size=20, cls='', style:s={} }) => {
@@ -433,6 +433,42 @@ const PrintHeader = ({ title, dateFrom, dateTo, teacherName }) => (
         </div>
     </div>
 );
+
+/* ━━━ 전체 백업 버튼 (슈퍼관리자 전용) ━━━ */
+const BackupButton = ({ journals, counsels, absences, notices, teachers }) => {
+    const [backing, setBacking] = useState(false);
+
+    const handleBackup = async () => {
+        setBacking(true);
+        try {
+            const backup = {
+                exportedAt: new Date().toLocaleString('ko-KR', {timeZone:'Asia/Seoul'}),
+                notices,
+                journals,
+                absences,
+                counsels,
+                teachers: teachers.map(t => ({...t, Password: '***'})),
+            };
+            const blob = new Blob([JSON.stringify(backup, null, 2)], {type:'application/json'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `군위몰입수학_백업_${getKSTDate()}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+        } catch(e) {}
+        finally { setBacking(false); }
+    };
+
+    return (
+        <button onClick={handleBackup} disabled={backing}
+            style={{display:'flex',alignItems:'center',gap:6,padding:'10px 16px',borderRadius:14,fontSize:12,fontWeight:900,
+                background:'#1e293b',color:'#fff',border:'2px solid #334155',transition:'all .15s',opacity:backing?0.7:1}}>
+            <Icon name="download" size={14}/>
+            {backing ? '백업 중...' : '전체 데이터 백업'}
+        </button>
+    );
+};
 
 /* ━━━ 로그인 ━━━ */
 const LoginScreen = ({ onLogin }) => {
@@ -501,19 +537,11 @@ const PendingScreen = ({ user, onLogout }) => (
                 <div className="logo-icon"><Icon name="sparkles" size={22}/></div>
                 <div><div className="logo-title">군위몰입수학</div><div className="logo-sub">Staff Portal</div></div>
             </div>
-            <div style={{
-                width:72,height:72,borderRadius:'50%',
-                background:'#fef3c7',border:'3px solid #fde68a',
-                display:'flex',alignItems:'center',justifyContent:'center',
-                margin:'0 auto 20px',fontSize:32,
-            }}>⏳</div>
-            <div style={{fontSize:18,fontWeight:900,color:'#0f172a',marginBottom:8}}>
-                승인 대기 중
-            </div>
+            <div style={{width:72,height:72,borderRadius:'50%',background:'#fef3c7',border:'3px solid #fde68a',display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto 20px',fontSize:32}}>⏳</div>
+            <div style={{fontSize:18,fontWeight:900,color:'#0f172a',marginBottom:8}}>승인 대기 중</div>
             <div style={{fontSize:13,fontWeight:700,color:'#64748b',lineHeight:1.8,marginBottom:24}}>
                 <span style={{fontWeight:900,color:'#f97316'}}>{user.name}</span> 강사님<br/>
-                관리자 승인 후 이용 가능합니다.<br/>
-                잠시만 기다려 주세요 🙏
+                관리자 승인 후 이용 가능합니다.<br/>잠시만 기다려 주세요 🙏
             </div>
             <div style={{padding:'12px 16px',background:'#f8fafc',borderRadius:14,fontSize:12,fontWeight:700,color:'#94a3b8',marginBottom:20}}>
                 승인 문의: 관리자에게 연락해 주세요
@@ -703,7 +731,7 @@ const TeacherApp = ({ user, onLogout }) => {
 };
 
 /* ━━━ 관리자 앱 ━━━ */
-const AdminApp = ({ user, onLogout }) => {
+const AdminApp = ({ user, onLogout, allData }) => {
     const [view, setView] = useState('dashboard');
     const [notices, setNotices] = useState([]);
     const [journals, setJournals] = useState([]);
@@ -730,12 +758,12 @@ const AdminApp = ({ user, onLogout }) => {
     useEffect(() => { loadAll(); }, []);
 
     const navItems = [
-        {id:'dashboard', label:'전체 현황',    icon:'sparkles', active:'active-orange'},
-        {id:'teachers',  label:'강사 계정 관리',icon:'users',    active:'active-dark'},
-        {id:'notice',    label:'공지사항 관리', icon:'bell',     active:'active-blue'},
-        {id:'journal',   label:'근무 일지 전체',icon:'pencil',   active:'active-green'},
-        {id:'absence',   label:'결석 사유 전체',icon:'alert',    active:'active-red'},
-        {id:'counsel',   label:'상담 기록 전체',icon:'chat',     active:'active-purple'},
+        {id:'dashboard', label:'전체 현황',    icon:'sparkles', active:'active-orange', count:null},
+        {id:'teachers',  label:'강사 계정 관리',icon:'users',    active:'active-dark',   count:null},
+        {id:'notice',    label:'공지사항 관리', icon:'bell',     active:'active-blue',   count:null},
+        {id:'journal',   label:'근무 일지 전체',icon:'pencil',   active:'active-green',  count:journals.length, countColor:'#10b981'},
+        {id:'absence',   label:'결석 사유 전체',icon:'alert',    active:'active-red',    count:absences.length, countColor:'#ef4444'},
+        {id:'counsel',   label:'상담 기록 전체',icon:'chat',     active:'active-purple', count:counsels.length, countColor:'#8b5cf6'},
     ];
 
     return (
@@ -749,8 +777,20 @@ const AdminApp = ({ user, onLogout }) => {
                 </div>
                 <nav className="nav">
                     {navItems.map(btn => (
-                        <button key={btn.id} className={`nav-btn ${view===btn.id?btn.active:''}`} onClick={()=>{setView(btn.id);setSidebar(false);}}>
-                            <Icon name={btn.icon} size={17}/> {btn.label}
+                        <button key={btn.id} className={`nav-btn ${view===btn.id?btn.active:''}`} onClick={()=>{setView(btn.id);setSidebar(false);}}
+                            style={{justifyContent:'space-between'}}>
+                            <span style={{display:'flex',alignItems:'center',gap:10}}>
+                                <Icon name={btn.icon} size={17}/> {btn.label}
+                            </span>
+                            {!loading && btn.count !== null && btn.count > 0 && (
+                                <span style={{
+                                    fontSize:10, fontWeight:900, minWidth:22, height:18,
+                                    borderRadius:99, display:'flex', alignItems:'center', justifyContent:'center',
+                                    padding:'0 6px',
+                                    background: view===btn.id ? 'rgba(255,255,255,0.25)' : btn.countColor+'22',
+                                    color: view===btn.id ? '#fff' : btn.countColor,
+                                }}>{btn.count}</span>
+                            )}
                         </button>
                     ))}
                 </nav>
@@ -759,6 +799,13 @@ const AdminApp = ({ user, onLogout }) => {
                         <div className="user-avatar admin">{user.isSuper?'관':user.name[0]}</div>
                         <div><div style={{fontSize:13,fontWeight:900,color:'#1e293b'}}>{user.name} 관리자</div><div style={{fontSize:11,fontWeight:700,color:'#94a3b8'}}>{user.isSuper?'최고 관리자':'관리자'}</div></div>
                     </div>
+                    {/* ── 슈퍼관리자 전용 백업 버튼 ── */}
+                    {user.isSuper && !loading && (
+                        <BackupButton
+                            journals={journals} counsels={counsels}
+                            absences={absences} notices={notices} teachers={teachers}
+                        />
+                    )}
                     <button onClick={onLogout} style={{display:'flex',alignItems:'center',gap:6,padding:'10px 14px',borderRadius:14,fontSize:12,fontWeight:700,color:'#94a3b8',width:'100%'}}>
                         <Icon name="logout" size={14}/> 로그아웃
                     </button>
@@ -867,7 +914,7 @@ const NoticeView = ({ notices: initialNotices, isAdmin, showToast, reload }) => 
     );
 };
 
-/* ━━━ 근무 일지 (강사) — 날짜필터 + 인쇄 ━━━ */
+/* ━━━ 근무 일지 (강사) ━━━ */
 const JournalView = ({ journals: initialJournals, user, today, showToast, reload }) => {
     const [journals, setJournals] = useState(initialJournals);
     const [showModal, setShowModal] = useState(false);
@@ -886,8 +933,6 @@ const JournalView = ({ journals: initialJournals, user, today, showToast, reload
         if (dateTo   && d > dateTo)   return false;
         return true;
     }), [myJournals, dateFrom, dateTo]);
-
-    const handlePrint = () => window.print();
 
     const handleSave = async () => {
         if (!content.trim()) return; setSaving(true);
@@ -914,7 +959,7 @@ const JournalView = ({ journals: initialJournals, user, today, showToast, reload
                 </button>
             </div>
             <PrintFilterBar dateFrom={dateFrom} dateTo={dateTo} onDateFrom={setDateFrom} onDateTo={setDateTo}
-                count={filtered.length} total={myJournals.length} onPrint={handlePrint}/>
+                count={filtered.length} total={myJournals.length} onPrint={()=>window.print()}/>
             {filtered.length===0 ? <div className="empty-box"><p style={{fontWeight:700}}>작성한 일지가 없습니다</p></div> :
                 filtered.map(j=>(
                     <div key={j.ID} className="list-item" style={{position:'relative',paddingRight:72}}>
@@ -944,7 +989,7 @@ const JournalView = ({ journals: initialJournals, user, today, showToast, reload
     );
 };
 
-/* ━━━ 결석 사유 (강사) — 날짜필터 + 인쇄 ━━━ */
+/* ━━━ 결석 사유 (강사) ━━━ */
 const AbsenceView = ({ absences: initialAbsences, user, today, showToast, reload }) => {
     const [absences, setAbsences] = useState(initialAbsences);
     const [showModal, setShowModal] = useState(false);
@@ -964,7 +1009,6 @@ const AbsenceView = ({ absences: initialAbsences, user, today, showToast, reload
         return true;
     }), [myAbsences, dateFrom, dateTo]);
 
-    const handlePrint = () => window.print();
     const handleSave = async () => {
         if (!form.studentName.trim()||!form.reason.trim()) return; setSaving(true);
         if (editTarget) {
@@ -988,7 +1032,7 @@ const AbsenceView = ({ absences: initialAbsences, user, today, showToast, reload
                 </button>
             </div>
             <PrintFilterBar dateFrom={dateFrom} dateTo={dateTo} onDateFrom={setDateFrom} onDateTo={setDateTo}
-                count={filtered.length} total={myAbsences.length} onPrint={handlePrint}/>
+                count={filtered.length} total={myAbsences.length} onPrint={()=>window.print()}/>
             {filtered.length===0 ? <div className="empty-box"><p style={{fontWeight:700}}>입력한 결석 사유가 없습니다</p></div> :
                 filtered.map(a=>(
                     <div key={a.ID} className="list-item" style={{position:'relative',paddingRight:72}}>
@@ -1028,7 +1072,7 @@ const AbsenceView = ({ absences: initialAbsences, user, today, showToast, reload
     );
 };
 
-/* ━━━ 상담 기록 (강사) — 날짜필터 + 인쇄 ━━━ */
+/* ━━━ 상담 기록 (강사) ━━━ */
 const CounselView = ({ counsels: initialCounsels, user, today, showToast, reload }) => {
     const [counsels, setCounsels] = useState(initialCounsels);
     const [showModal, setShowModal] = useState(false);
@@ -1047,7 +1091,6 @@ const CounselView = ({ counsels: initialCounsels, user, today, showToast, reload
         return true;
     }), [myCounsels, dateFrom, dateTo]);
 
-    const handlePrint = () => window.print();
     const handleSave = async () => {
         if (!form.studentName.trim()||!form.content.trim()) return; setSaving(true);
         if (editTarget) {
@@ -1071,7 +1114,7 @@ const CounselView = ({ counsels: initialCounsels, user, today, showToast, reload
                 </button>
             </div>
             <PrintFilterBar dateFrom={dateFrom} dateTo={dateTo} onDateFrom={setDateFrom} onDateTo={setDateTo}
-                count={filtered.length} total={myCounsels.length} onPrint={handlePrint}/>
+                count={filtered.length} total={myCounsels.length} onPrint={()=>window.print()}/>
             {filtered.length===0 ? <div className="empty-box"><p style={{fontWeight:700}}>상담 기록이 없습니다</p></div> :
                 filtered.map(c=>(
                     <div key={c.ID} className="list-item" style={{position:'relative',paddingRight:72}}>
@@ -1106,7 +1149,7 @@ const CounselView = ({ counsels: initialCounsels, user, today, showToast, reload
     );
 };
 
-/* ━━━ 관리자 대시보드 — 통합인쇄 ━━━ */
+/* ━━━ 관리자 대시보드 ━━━ */
 const AdminDashboard = ({ journals, counsels, absences, notices, teachers, today }) => {
     const [dateFrom, setDateFrom] = useState('');
     const [dateTo,   setDateTo]   = useState('');
@@ -1117,9 +1160,8 @@ const AdminDashboard = ({ journals, counsels, absences, notices, teachers, today
     const thisMonth = today.substring(0,7);
     const monthCounsels = counsels.filter(c=>c.Date&&normalizeDate(c.Date).startsWith(thisMonth));
 
-    // 통합 인쇄용 필터
-    const printFilter = (arr, dateField='Date') => arr.filter(item => {
-        const d = normalizeDate(item[dateField]);
+    const printFilter = (arr) => arr.filter(item => {
+        const d = normalizeDate(item.Date);
         if (dateFrom && d < dateFrom) return false;
         if (dateTo   && d > dateTo)   return false;
         if (teacherFilter !== 'ALL' && item.TeacherName !== teacherFilter) return false;
@@ -1130,22 +1172,16 @@ const AdminDashboard = ({ journals, counsels, absences, notices, teachers, today
     const pAbsences = printFilter(absences);
     const pCounsels = printFilter(counsels);
 
-    const handlePrint = () => window.print();
-
     return (
         <div className="fade-in" style={{display:'flex',flexDirection:'column',gap:20,paddingBottom:40}}>
-
-            {/* 인쇄 헤더 */}
             <PrintHeader title="전체 통합 보고서" dateFrom={dateFrom} dateTo={dateTo} teacherName={teacherFilter!=='ALL'?teacherFilter:null}/>
-
-            {/* 통합 인쇄 설정 바 */}
             <div style={{background:'#f8fafc',border:'1px solid #f1f5f9',borderRadius:20,padding:'16px 20px'}} className="no-print">
                 <div style={{fontSize:12,fontWeight:900,color:'#94a3b8',marginBottom:12,letterSpacing:'.05em'}}>🖨️ 통합 인쇄 설정</div>
                 <PrintFilterBar
                     dateFrom={dateFrom} dateTo={dateTo} onDateFrom={setDateFrom} onDateTo={setDateTo}
                     count={pJournals.length+pAbsences.length+pCounsels.length}
                     total={journals.length+absences.length+counsels.length}
-                    onPrint={handlePrint}
+                    onPrint={()=>window.print()}
                     showTeacherFilter={true}
                     teacherFilter={teacherFilter} onTeacherFilter={setTeacherFilter}
                     teachers={teachers}
@@ -1157,9 +1193,7 @@ const AdminDashboard = ({ journals, counsels, absences, notices, teachers, today
                 </div>
             </div>
 
-            {/* 인쇄 시 통합 내용 */}
             <div className="print-only">
-                {/* 근무일지 */}
                 <div className="print-section-title green">📋 근무 일지 ({pJournals.length}건)</div>
                 {pJournals.length===0 ? <p style={{color:'#94a3b8',fontSize:12}}>내역 없음</p> :
                     pJournals.map(j=>(
@@ -1169,7 +1203,6 @@ const AdminDashboard = ({ journals, counsels, absences, notices, teachers, today
                         </div>
                     ))
                 }
-                {/* 결석사유 */}
                 <div className="print-section-title red" style={{marginTop:24}}>⚠️ 결석 사유 ({pAbsences.length}건)</div>
                 {pAbsences.length===0 ? <p style={{color:'#94a3b8',fontSize:12}}>내역 없음</p> :
                     pAbsences.map(a=>(
@@ -1179,7 +1212,6 @@ const AdminDashboard = ({ journals, counsels, absences, notices, teachers, today
                         </div>
                     ))
                 }
-                {/* 상담기록 */}
                 <div className="print-section-title purple" style={{marginTop:24}}>💬 상담 기록 ({pCounsels.length}건)</div>
                 {pCounsels.length===0 ? <p style={{color:'#94a3b8',fontSize:12}}>내역 없음</p> :
                     pCounsels.map(c=>(
@@ -1191,7 +1223,6 @@ const AdminDashboard = ({ journals, counsels, absences, notices, teachers, today
                 }
             </div>
 
-            {/* 일반 대시보드 내용 (화면에서만) */}
             <div className="no-print">
                 <div className="grid-3">
                     {[
@@ -1270,15 +1301,12 @@ const TeacherMgr = ({ teachers, showToast, reload, isSuper }) => {
         try { await api.post({action:'deleteTeacher',id}); showToast('삭제됨'); reload(); }
         catch(e){ showToast('삭제 실패','error'); }
     };
-
     const handleApproveTeacher = async (id, name) => {
         try { await api.post({action:'approveTeacher',id}); showToast(`${name} 강사 승인됐습니다`); reload(); }
         catch(e){ showToast('승인 실패','error'); }
     };
-
     const handleRejectTeacher = async (id, name) => {
-        if (!confirm(`${name} 강사 신청을 거절하시겠습니까?
-계정이 삭제됩니다.`)) return;
+        if (!confirm(`${name} 강사 신청을 거절하시겠습니까?\n계정이 삭제됩니다.`)) return;
         try { await api.post({action:'rejectTeacher',id}); showToast(`${name} 강사 신청이 거절됐습니다`); reload(); }
         catch(e){ showToast('거절 실패','error'); }
     };
@@ -1310,7 +1338,7 @@ const TeacherMgr = ({ teachers, showToast, reload, isSuper }) => {
                                             <div>
                                                 <div style={{display:'flex',alignItems:'center',gap:6}}>
                                                     <span style={{fontSize:14,fontWeight:900,color:'#1e293b'}}>{t.Name} 강사</span>
-                                                    {t.Status==='pending' && <span className="badge" style={{background:'#fef3c7',color:'#d97706',animation:'pulse 1.5s infinite'}}>⏳ 승인 대기</span>}
+                                                    {t.Status==='pending' && <span className="badge" style={{background:'#fef3c7',color:'#d97706'}}>⏳ 승인 대기</span>}
                                                     {t.Status!=='pending' && t.IsFirst&&<span className="badge badge-warn">설정 미완료</span>}
                                                 </div>
                                                 <div style={{fontSize:11,fontWeight:700,color:'#94a3b8'}}>담당 {labels.length}개 반</div>
@@ -1325,12 +1353,8 @@ const TeacherMgr = ({ teachers, showToast, reload, isSuper }) => {
                                             ) : (
                                                 <>
                                                     <button onClick={()=>setExpanded(isExp?null:t.ID)} style={{fontSize:11,fontWeight:900,padding:'6px 10px',borderRadius:10,background:isExp?'#f1f5f9':'#f8fafc',color:'#64748b'}}>{isExp?'접기':'담당반'}</button>
-                                                    {isSuper && (
-                                                        <button onClick={()=>handleResetTeacherPw(t.Name)} style={{fontSize:11,fontWeight:900,padding:'6px 10px',borderRadius:10,background:'#fff7ed',color:'#f97316',border:'1px solid #fed7aa'}}>비번 초기화</button>
-                                                    )}
-                                                    {isSuper && (
-                                                        <button onClick={()=>handleDeleteTeacher(t.ID,t.Name)} style={{color:'#cbd5e1',padding:6}}><Icon name="trash" size={14}/></button>
-                                                    )}
+                                                    {isSuper && <button onClick={()=>handleResetTeacherPw(t.Name)} style={{fontSize:11,fontWeight:900,padding:'6px 10px',borderRadius:10,background:'#fff7ed',color:'#f97316',border:'1px solid #fed7aa'}}>비번 초기화</button>}
+                                                    {isSuper && <button onClick={()=>handleDeleteTeacher(t.ID,t.Name)} style={{color:'#cbd5e1',padding:6}}><Icon name="trash" size={14}/></button>}
                                                 </>
                                             )}
                                         </div>
@@ -1389,7 +1413,7 @@ const Highlight = ({ text, keyword }) => {
     return <>{parts.map((p,i)=>p.toLowerCase()===keyword.toLowerCase()?<mark key={i} style={{background:'#fef08a',borderRadius:3,padding:'0 2px'}}>{p}</mark>:p)}</>;
 };
 
-/* ━━━ 관리자용 전체 뷰 — 날짜필터 + 강사필터 + 인쇄 ━━━ */
+/* ━━━ 관리자용 전체 뷰 ━━━ */
 const JournalAllView = ({ journals, teachers }) => {
     const [q, setQ] = useState('');
     const [dateFrom, setDateFrom] = useState('');
