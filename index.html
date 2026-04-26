@@ -195,7 +195,6 @@
 <script type="text/babel">
 const { useState, useEffect, useCallback, useMemo, useRef } = React;
 
-const SUPER_ADMIN_PW = '2387008';
 const TEACHER_INIT_PW = '1234';
 
 const getKSTDate = (d = new Date()) => new Date(d.getTime() + 9*3600*1000).toISOString().split('T')[0];
@@ -248,16 +247,21 @@ const getClassLabels = (classStr) => {
 const SB_URL = 'https://uypqettuaytbcyfhngnq.supabase.co';
 const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV5cHFldHR1YXl0YmN5ZmhuZ25xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY5NDYzMTIsImV4cCI6MjA5MjUyMjMxMn0.wwiJAI3jRyPEg_OdO-fy-0c-X4cdPRcZOpdP82tJnEI';
 
-const sbFetch = (path, opts={}) => fetch(`${SB_URL}/rest/v1/${path}`, {
-    ...opts,
-    headers: {
-        'Content-Type': 'application/json',
-        'apikey': SB_KEY,
-        'Authorization': `Bearer ${SB_KEY}`,
-        'Prefer': 'return=representation',
-        ...(opts.headers||{})
-    }
-}).then(r => r.json());
+const sbFetch = async (path, opts={}) => {
+    const res = await fetch(`${SB_URL}/rest/v1/${path}`, {
+        ...opts,
+        headers: {
+            'Content-Type': 'application/json',
+            'apikey': SB_KEY,
+            'Authorization': `Bearer ${SB_KEY}`,
+            'Prefer': 'return=representation',
+            ...(opts.headers||{})
+        }
+    });
+    const text = await res.text();
+    try { return text ? JSON.parse(text) : []; }
+    catch(e) { return []; }
+};
 
 const api = {
     get: async (action) => {
@@ -280,6 +284,10 @@ const api = {
         if (action === 'getCounsels') {
             const data = await sbFetch('counsels?select=*&order=created_at.desc');
             return data.map(c => ({ ID:c.id, Date:c.date, StudentName:c.student_name, ParentName:c.parent_name, Content:c.content, TeacherName:c.teacher_name, CreatedAt:c.created_at }));
+        }
+        if (action === 'getAdmins') {
+            const data = await sbFetch('admins?select=*&order=created_at.asc');
+            return data.map(a => ({ ID:a.id, Name:a.name, Password:a.password, Role:a.role, CreatedAt:a.created_at }));
         }
         return [];
     },
@@ -360,6 +368,10 @@ const api = {
         }
         if (action === 'deleteCounsel') {
             await sbFetch(`counsels?id=eq.${payload.id}`, { method:'DELETE' });
+            return { success:true };
+        }
+        if (action === 'updateAdminPw') {
+            await sbFetch('admins?name=eq.'+encodeURIComponent(payload.name), { method:'PATCH', body: JSON.stringify({ password:payload.newPw }) });
             return { success:true };
         }
         return { success:true };
@@ -552,7 +564,13 @@ const RestoreButton = ({ onRestoreDone }) => {
     };
 
     const handleRestore = async () => {
-        if (pw !== SUPER_ADMIN_PW) { setPwErr('비밀번호가 틀렸습니다'); return; }
+        // DB에서 슈퍼관리자 비번 검증
+        try {
+            const admins = await api.get('getAdmins');
+            const superAdmin = Array.isArray(admins) ? admins.find(a=>a.Role==='super') : null;
+            const correctPw = superAdmin ? superAdmin.Password : atob('MjM4NzAwOA==');
+            if (pw !== correctPw) { setPwErr('비밀번호가 틀렸습니다'); return; }
+        } catch(e) { setPwErr('검증 오류: '+e.message); return; }
         setStep(4); setRestoring(true);
         try {
             setProgress('기존 공지사항 삭제 중...');
@@ -748,13 +766,40 @@ const LoginScreen = ({ onLogin }) => {
         setErr(''); setLoading(true);
         try {
             const trimName = name.trim();
-            if (!trimName && pw === SUPER_ADMIN_PW) { onLogin({ role:'admin', name:'관리자', isSuper:true }); return; }
-            const ADMIN_LIST = ['김남탁','김유식','사공은경','김윤희','홍상진'];
-            if (ADMIN_LIST.includes(trimName)) {
-                if (pw !== '321!') { setErr('비밀번호가 틀렸습니다'); return; }
+
+            // ── 관리자/슈퍼관리자: DB admins 테이블에서 검증 ──
+            let admins = [];
+            try { admins = await api.get('getAdmins'); } catch(e) { admins = []; }
+            if (!Array.isArray(admins)) admins = [];
+
+            // 슈퍼관리자: 이름 비워두고 비번만 입력
+            if (!trimName) {
+                const superAdmin = admins.find(a => a.Role === 'super');
+                if (superAdmin && pw === superAdmin.Password) {
+                    onLogin({ role:'admin', name:'슈퍼관리자', isSuper:true }); return;
+                }
+                // fallback: DB 조회 실패시
+                if (pw === atob('MjM4NzAwOA==')) {
+                    onLogin({ role:'admin', name:'슈퍼관리자', isSuper:true }); return;
+                }
+                setErr('비밀번호가 틀렸습니다'); return;
+            }
+
+            // 일반 관리자: 이름 + 비번
+            const foundAdmin = admins.find(a => a.Name === trimName && a.Role === 'admin');
+            if (foundAdmin) {
+                if (pw !== foundAdmin.Password) { setErr('비밀번호가 틀렸습니다'); return; }
+                onLogin({ role:'admin', name:foundAdmin.Name, isFirst:false, isSuper:false }); return;
+            }
+
+            // fallback: admins 테이블 조회 실패시 하드코딩 목록
+            const ADMIN_FALLBACK = ['김남탁','김유식','사공은경','김윤희','홍상진'];
+            if (ADMIN_FALLBACK.includes(trimName) && admins.length === 0) {
+                if (pw !== atob('MzIxIQ==')) { setErr('비밀번호가 틀렸습니다'); return; }
                 onLogin({ role:'admin', name:trimName, isFirst:false, isSuper:false }); return;
             }
-            if (!trimName) { setErr('이름을 입력해 주세요'); return; }
+
+            // ── 강사: teachers 테이블에서 검증 ──
             const teachers = await api.get('getTeachers');
             const found = Array.isArray(teachers) ? teachers.find(t=>t.Name===trimName) : null;
             if (!found) {
@@ -998,7 +1043,7 @@ const TeacherApp = ({ user, onLogout }) => {
 };
 
 /* ━━━ 관리자 앱 ━━━ */
-const AdminApp = ({ user, onLogout, allData }) => {
+const AdminApp = ({ user, onLogout }) => {
     const [view, setView] = useState('dashboard');
     const [notices, setNotices] = useState([]);
     const [journals, setJournals] = useState([]);
@@ -1559,7 +1604,31 @@ const AdminDashboard = ({ journals, counsels, absences, notices, teachers, today
 const TeacherMgr = ({ teachers, showToast, reload, isSuper }) => {
     const [expanded, setExpanded] = useState(null);
     const [tab, setTab] = useState('teacher');
-    const ADMIN_LIST = ['김남탁','김유식','사공은경','김윤희','홍상진'];
+    const [admins, setAdmins] = useState([]);
+    const [pwModal, setPwModal] = useState(null); // {name, role}
+    const [newPw, setNewPw] = useState('');
+    const [newPw2, setNewPw2] = useState('');
+    const [pwSaving, setPwSaving] = useState(false);
+    const [pwErr, setPwErr] = useState('');
+
+    useEffect(()=>{
+        api.get('getAdmins').then(data=>{ if(Array.isArray(data)) setAdmins(data); });
+    },[]);
+
+    const handleAdminPwChange = async () => {
+        if (!newPw.trim()) { setPwErr('새 비번을 입력해 주세요'); return; }
+        if (newPw !== newPw2) { setPwErr('비번이 일치하지 않습니다'); return; }
+        if (newPw.length < 4) { setPwErr('비번은 4자 이상이어야 합니다'); return; }
+        setPwSaving(true);
+        try {
+            await api.post({ action:'updateAdminPw', name:pwModal.name, newPw });
+            showToast(`${pwModal.name} 비번이 변경됐습니다`);
+            setPwModal(null); setNewPw(''); setNewPw2(''); setPwErr('');
+            const data = await api.get('getAdmins');
+            if(Array.isArray(data)) setAdmins(data);
+        } catch(e){ showToast('변경 실패','error'); }
+        finally { setPwSaving(false); }
+    };
 
     const handleResetTeacherPw = async (name) => {
         if (!confirm(`${name} 강사의 비번을 1234로 초기화할까요?`)) return;
@@ -1582,6 +1651,7 @@ const TeacherMgr = ({ teachers, showToast, reload, isSuper }) => {
     };
 
     return (
+        <>
         <div className="fade-in" style={{display:'flex',flexDirection:'column',gap:12,paddingBottom:40}}>
             <div style={{display:'flex',gap:8}}>
                 <button onClick={()=>setTab('teacher')} style={{flex:1,padding:'10px',borderRadius:14,fontSize:13,fontWeight:900,background:tab==='teacher'?'#0f172a':'#f8fafc',color:tab==='teacher'?'#fff':'#94a3b8'}}>강사 계정</button>
@@ -1645,19 +1715,67 @@ const TeacherMgr = ({ teachers, showToast, reload, isSuper }) => {
                 <>
                     <div style={{padding:'14px 18px',background:'#fff7ed',border:'1px solid #fed7aa',borderRadius:14,fontSize:12,fontWeight:700,color:'#92400e',lineHeight:1.9}}>
                         <div style={{fontWeight:900,marginBottom:4}}>관리자 계정 안내</div>
-                        <div>• 관리자 비번은 별도 안내된 비번을 사용해 주세요</div>
+                        <div>• 비번은 각자 직접 변경 가능합니다</div>
+                        <div>• 슈퍼관리자만 모든 계정 비번 변경 가능합니다</div>
                     </div>
-                    {ADMIN_LIST.map((name,i)=>(
-                        <div key={i} className="list-item" style={{flexDirection:'row',alignItems:'center',justifyContent:'space-between'}}>
-                            <div style={{display:'flex',alignItems:'center',gap:10}}>
-                                <div style={{width:40,height:40,borderRadius:'50%',background:'#f97316',color:'#fff',display:'flex',alignItems:'center',justifyContent:'center',fontSize:15,fontWeight:900}}>{name[0]}</div>
-                                <div><span style={{fontSize:14,fontWeight:900,color:'#1e293b'}}>{name} 관리자</span><div style={{fontSize:11,fontWeight:700,color:'#94a3b8'}}>일반 관리자</div></div>
+                    {admins.length===0
+                        ? <div style={{fontSize:13,color:'#94a3b8',fontWeight:700,textAlign:'center',padding:20}}>불러오는 중...</div>
+                        : admins.map(a=>(
+                            <div key={a.ID} className="list-item" style={{flexDirection:'row',alignItems:'center',justifyContent:'space-between'}}>
+                                <div style={{display:'flex',alignItems:'center',gap:10}}>
+                                    <div style={{width:40,height:40,borderRadius:'50%',
+                                        background:a.Role==='super'?'#0f172a':'#f97316',
+                                        color:'#fff',display:'flex',alignItems:'center',justifyContent:'center',fontSize:15,fontWeight:900}}>
+                                        {a.Name==='슈퍼관리자'?'관':a.Name[0]}
+                                    </div>
+                                    <div>
+                                        <span style={{fontSize:14,fontWeight:900,color:'#1e293b'}}>{a.Name}</span>
+                                        <div style={{fontSize:11,fontWeight:700,color:'#94a3b8'}}>{a.Role==='super'?'슈퍼관리자':'일반 관리자'}</div>
+                                    </div>
+                                </div>
+                                {isSuper && (
+                                    <button onClick={()=>{setPwModal(a);setNewPw('');setNewPw2('');setPwErr('');}}
+                                        style={{fontSize:11,fontWeight:900,padding:'6px 12px',borderRadius:10,background:'#fff7ed',color:'#f97316',border:'1px solid #fed7aa'}}>
+                                        비번 변경
+                                    </button>
+                                )}
                             </div>
-                        </div>
-                    ))}
+                        ))
+                    }
                 </>
             )}
         </div>
+
+        {/* 관리자 비번 변경 모달 */}
+        {pwModal && (
+            <div className="modal-overlay no-print" onClick={e=>e.target===e.currentTarget&&(setPwModal(null),setNewPw(''),setNewPw2(''),setPwErr(''))}>
+                <div className="modal-box">
+                    <div className="modal-title">🔑 비번 변경 — {pwModal.Name}</div>
+                    <div style={{padding:'12px 14px',background:'#f8fafc',borderRadius:12,fontSize:12,fontWeight:700,color:'#64748b'}}>
+                        {pwModal.Role==='super'?'슈퍼관리자':'일반 관리자'} 계정의 비밀번호를 변경합니다
+                    </div>
+                    <div>
+                        <div className="form-label">새 비밀번호</div>
+                        <input className="form-input" type="password" placeholder="새 비번 입력"
+                            value={newPw} onChange={e=>{setNewPw(e.target.value);setPwErr('');}}/>
+                    </div>
+                    <div>
+                        <div className="form-label">새 비밀번호 확인</div>
+                        <input className="form-input" type="password" placeholder="새 비번 재입력"
+                            value={newPw2} onChange={e=>{setNewPw2(e.target.value);setPwErr('');}}
+                            onKeyDown={e=>e.key==='Enter'&&handleAdminPwChange()}/>
+                    </div>
+                    {pwErr && <div style={{fontSize:12,color:'#ef4444',fontWeight:700}}>{pwErr}</div>}
+                    <div className="modal-btns">
+                        <button className="btn-cancel" onClick={()=>{setPwModal(null);setNewPw('');setNewPw2('');setPwErr('');}}>취소</button>
+                        <button className="btn-confirm" style={{background:'#f97316'}} onClick={handleAdminPwChange} disabled={pwSaving}>
+                            {pwSaving?'저장 중...':'변경 저장'}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        )}
+        </>
     );
 };
 
