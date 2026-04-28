@@ -218,8 +218,20 @@ const formatDate = val => {
     return normalizeDate(val);
 };
 
+// ── 작성일(CreatedAt) 기준 정렬 — 공지사항 등 Date 필드 없는 데이터용 ──
 const sortByCreatedAt = (arr) =>
     [...arr].sort((a, b) => new Date(b.CreatedAt) - new Date(a.CreatedAt));
+
+// ── 날짜(Date) 기준 정렬 — 같은 날짜는 작성일로 보조 정렬 ──
+// 근무일지 / 결석사유 / 학부모상담에 사용
+const sortByDate = (arr) =>
+    [...arr].sort((a, b) => {
+        const da = normalizeDate(a.Date) || '';
+        const db = normalizeDate(b.Date) || '';
+        if (db > da) return 1;
+        if (db < da) return -1;
+        return new Date(b.CreatedAt) - new Date(a.CreatedAt);
+    });
 
 const ALL_CLASSES = (() => {
     const out = [];
@@ -1241,7 +1253,8 @@ const JournalView = ({ journals: initialJournals, user, today, showToast, reload
     const [dateTo,   setDateTo]   = useState('');
     useEffect(() => { setJournals(initialJournals); }, [initialJournals]);
 
-    const myJournals = useMemo(() => sortByCreatedAt(journals.filter(j=>j.TeacherName===user.name)), [journals,user]);
+    // ★ 변경: 작성일 → 날짜 기준 정렬
+    const myJournals = useMemo(() => sortByDate(journals.filter(j=>j.TeacherName===user.name)), [journals,user]);
     const filtered = useMemo(() => myJournals.filter(j => {
         const d = normalizeDate(j.Date);
         if (dateFrom && d < dateFrom) return false;
@@ -1316,7 +1329,8 @@ const AbsenceView = ({ absences: initialAbsences, user, today, showToast, reload
     useEffect(() => { setAbsences(initialAbsences); }, [initialAbsences]);
 
     const myClasses = useMemo(() => (user.classes||'').split(',').map(id=>ALL_CLASSES.find(c=>c.id===id.trim())).filter(Boolean), [user]);
-    const myAbsences = useMemo(() => sortByCreatedAt(absences.filter(a=>a.TeacherName===user.name)), [absences,user]);
+    // ★ 변경: 작성일 → 날짜 기준 정렬
+    const myAbsences = useMemo(() => sortByDate(absences.filter(a=>a.TeacherName===user.name)), [absences,user]);
     const filtered = useMemo(() => myAbsences.filter(a => {
         const d = normalizeDate(a.Date);
         if (dateFrom && d < dateFrom) return false;
@@ -1398,7 +1412,8 @@ const CounselView = ({ counsels: initialCounsels, user, today, showToast, reload
     const [dateTo,   setDateTo]   = useState('');
     useEffect(() => { setCounsels(initialCounsels); }, [initialCounsels]);
 
-    const myCounsels = useMemo(() => sortByCreatedAt(counsels.filter(c=>c.TeacherName===user.name)), [counsels,user]);
+    // ★ 변경: 작성일 → 날짜 기준 정렬
+    const myCounsels = useMemo(() => sortByDate(counsels.filter(c=>c.TeacherName===user.name)), [counsels,user]);
     const filtered = useMemo(() => myCounsels.filter(c => {
         const d = normalizeDate(c.Date);
         if (dateFrom && d < dateFrom) return false;
@@ -1483,9 +1498,10 @@ const AdminDashboard = ({ journals, counsels, absences, notices, teachers, today
         return true;
     });
 
-    const pJournals = printFilter(journals);
-    const pAbsences = printFilter(absences);
-    const pCounsels = printFilter(counsels);
+    // ★ 변경: 인쇄 영역도 날짜 기준 정렬
+    const pJournals = sortByDate(printFilter(journals));
+    const pAbsences = sortByDate(printFilter(absences));
+    const pCounsels = sortByDate(printFilter(counsels));
 
     return (
         <div className="fade-in" style={{display:'flex',flexDirection:'column',gap:20,paddingBottom:40}}>
@@ -1807,7 +1823,8 @@ const JournalAllView = ({ journals, teachers }) => {
     const [dateFrom, setDateFrom] = useState('');
     const [dateTo,   setDateTo]   = useState('');
     const [teacherFilter, setTeacherFilter] = useState('ALL');
-    const sorted = sortByCreatedAt(journals);
+    // ★ 변경: 작성일 → 날짜 기준 정렬
+    const sorted = sortByDate(journals);
     const filtered = sorted.filter(j => {
         const d = normalizeDate(j.Date);
         if (dateFrom && d < dateFrom) return false;
@@ -1840,7 +1857,8 @@ const AbsenceAllView = ({ absences, teachers }) => {
     const [dateFrom, setDateFrom] = useState('');
     const [dateTo,   setDateTo]   = useState('');
     const [teacherFilter, setTeacherFilter] = useState('ALL');
-    const sorted = sortByCreatedAt(absences);
+    // ★ 변경: 작성일 → 날짜 기준 정렬
+    const sorted = sortByDate(absences);
     const filtered = sorted.filter(a => {
         const d = normalizeDate(a.Date);
         if (dateFrom && d < dateFrom) return false;
@@ -1873,7 +1891,8 @@ const CounselAllView = ({ counsels, teachers }) => {
     const [dateFrom, setDateFrom] = useState('');
     const [dateTo,   setDateTo]   = useState('');
     const [teacherFilter, setTeacherFilter] = useState('ALL');
-    const sorted = sortByCreatedAt(counsels);
+    // ★ 변경: 작성일 → 날짜 기준 정렬
+    const sorted = sortByDate(counsels);
     const filtered = sorted.filter(c => {
         const d = normalizeDate(c.Date);
         if (dateFrom && d < dateFrom) return false;
